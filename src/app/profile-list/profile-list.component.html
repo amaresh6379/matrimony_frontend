@@ -1,0 +1,171 @@
+<div class="community-page">
+
+    <!-- Simple Header -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="logo-area">
+                <h1 class="tamil-title">வாணியச் செட்டியார் கல்யாண மாலை</h1>
+                <h2 class="english-title">Vaniya Chettiyar Kalyana Malai</h2>
+            </div>
+
+            <div class="user-nav">
+                <ng-container *ngIf="!isLoggedIn">
+                    <a (click)="navigateToRegister()">Free Register</a>
+                    <span class="divider">|</span>
+                    <a (click)="toggleLogin()">Login</a>
+                </ng-container>
+
+                <ng-container *ngIf="isLoggedIn">
+                    <a (click)="editMyProfile()">Edit Profile</a>
+                    <span class="divider">|</span>
+                    <a (click)="toggleLogin()">Logout</a>
+                </ng-container>
+            </div>
+        </div>
+    </header>
+
+    <!-- User Stats / Dashboard Bar (Only when Logged In) -->
+    <div class="user-stats-bar" *ngIf="isLoggedIn">
+        <div class="completion-section">
+            <span class="label">Profile Completion: {{userProfileCompletion}}%</span>
+            <mat-progress-bar mode="determinate" [value]="userProfileCompletion"
+                class="custom-progress"></mat-progress-bar>
+            <a (click)="editMyProfile()" class="complete-link">Complete Now</a>
+        </div>
+
+        <div class="dashboard-actions">
+            <div class="my-card-actions">
+                <button mat-flat-button color="primary" (click)="downloadMyProfile()">
+                    <mat-icon inline>download</mat-icon> Download My ID Card
+                </button>
+                <button mat-stroked-button class="whatsapp-btn" (click)="shareMyProfileWhatsapp()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" width="20">
+                    Share
+                </button>
+            </div>
+
+            <div class="interest-actions">
+                <button mat-stroked-button (click)="viewSentInterests()">
+                    <mat-icon>outbound</mat-icon> Sent
+                </button>
+                <button mat-stroked-button (click)="viewReceivedInterests()" color="warn">
+                    <mat-icon>favorite</mat-icon> Interests
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- Filters Section -->
+        <mat-expansion-panel class="filter-panel" expanded="true">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    <mat-icon>filter_list</mat-icon> Filter Profiles
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <form [formGroup]="filterForm" class="filter-form">
+                <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Search ID or Name</mat-label>
+                    <input matInput formControlName="searchQuery">
+                    <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Age From</mat-label>
+                        <input matInput type="number" formControlName="ageFrom">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Age To</mat-label>
+                        <input matInput type="number" formControlName="ageTo">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Location</mat-label>
+                        <input matInput formControlName="location" placeholder="Ex: Chennai">
+                    </mat-form-field>
+                </div>
+            </form>
+        </mat-expansion-panel>
+
+        <!-- Results Count -->
+        <div class="count-bar">
+            Showing {{totalProfiles}} Profiles
+        </div>
+
+        <!-- Profiles Grid -->
+        <div class="profile-grid">
+            <div class="profile-box" *ngFor="let profile of visibleProfiles">
+
+                <div class="box-header">
+                    <span class="pid">{{profile.id}}</span>
+                    <span class="status">{{profile.maritalStatus}}</span>
+                </div>
+
+                <div class="box-body">
+                    <div class="img-container">
+                        <img [src]="profile.image" [alt]="profile.name">
+                    </div>
+
+                    <div class="info-container">
+                        <h3 class="p-name">{{profile.name}} <small>({{profile.age}} Yrs)</small></h3>
+
+                        <div class="detail-row">
+                            <span class="label">Edu:</span>
+                            <span class="val">{{profile.education}}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Job:</span>
+                            <span class="val">{{profile.profession}}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Place:</span>
+                            <span class="val">{{profile.location}}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Star:</span>
+                            <span class="val">{{profile.star}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-footer">
+                    <!-- If Not Logged In -->
+                    <ng-container *ngIf="!isLoggedIn">
+                        <button class="btn-primary full-width" (click)="navigateToRegister()">
+                            Register to Contact
+                        </button>
+                        <button class="btn-outline" (click)="toggleLogin()">
+                            <mat-icon inline>login</mat-icon> Sign In
+                        </button>
+                    </ng-container>
+
+                    <!-- If Logged In -->
+                    <ng-container *ngIf="isLoggedIn">
+                        <div class="icon-row">
+                            <!-- Removed Download Button from here -->
+                            <button class="action-icon-btn" title="Send Interest" [class.sent]="profile.interestSent"
+                                (click)="sendInterest(profile)">
+                                <mat-icon>{{ profile.interestSent ? 'favorite' : 'favorite_border' }}</mat-icon>
+                            </button>
+                        </div>
+                        <button class="btn-primary" (click)="viewContact(profile)">
+                            View Contact
+                        </button>
+                    </ng-container>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator [length]="totalProfiles" [pageSize]="pageSize" [pageSizeOptions]="[10, 20]"
+            (page)="handlePageEvent($event)">
+        </mat-paginator>
+
+    </div>
+
+</div>

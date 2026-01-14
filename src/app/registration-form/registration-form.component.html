@@ -1,0 +1,308 @@
+<div class="container">
+  <mat-card class="form-card">
+    <div class="header-branding">
+      <div class="logo-area">
+        <h1 class="main-title tamil-text">வாணியச் செட்டியார் <br> கல்யாண மாலை</h1>
+      </div>
+      <div class="contact-info">
+        <p class="phone"><mat-icon inline>call</mat-icon> 8903960261, 9843011386</p>
+        <p class="address"><mat-icon inline>location_on</mat-icon> Vaniyar Sangam Kovilpatti, Thoothukudi District</p>
+      </div>
+    </div>
+
+    <mat-stepper [linear]="isLinear" #stepper labelPosition="bottom" class="custom-stepper">
+
+      <!-- PAGE 1: Basic Details -->
+      <mat-step [stepControl]="basicDetailsForm">
+        <ng-template matStepLabel>Basic</ng-template>
+        <form [formGroup]="basicDetailsForm" class="step-content">
+          <h3 class="section-title">Basic Details</h3>
+
+          <label id="gender-label" class="radio-label">Gender <span class="required">*</span></label>
+          <mat-radio-group aria-labelledby="gender-label" formControlName="gender" class="gender-radio-group">
+            <mat-radio-button value="Male">Male</mat-radio-button>
+            <mat-radio-button value="Female">Female</mat-radio-button>
+          </mat-radio-group>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" required>
+            <mat-error>Name is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date Of Birth</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="dob" required readonly>
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker touchUi="true"></mat-datepicker> <!-- touchUi for mobile -->
+            <mat-error>Date of Birth is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Marital Status</mat-label>
+            <mat-select formControlName="maritalStatus" required>
+              <mat-option *ngFor="let status of maritalStatusOptions" [value]="status">{{status}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Religion</mat-label>
+            <mat-select formControlName="religion" required>
+              <mat-option *ngFor="let rel of religionOptions" [value]="rel">{{rel}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Native Place</mat-label>
+            <input matInput formControlName="nativePlace" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>District</mat-label>
+            <mat-select formControlName="district" required>
+              <mat-option *ngFor="let dist of districtOptions" [value]="dist">{{dist}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mobile Number</mat-label>
+            <input matInput formControlName="mobileNumber" type="tel" required maxlength="10">
+            <mat-error>Valid 10-digit number required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Father's Name</mat-label>
+            <input matInput formControlName="fatherName" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mother's Name</mat-label>
+            <input matInput formControlName="motherName" required>
+          </mat-form-field>
+
+        </form>
+        <div class="sticky-footer">
+          <button mat-raised-button color="primary" matStepperNext [disabled]="basicDetailsForm.invalid"
+            class="action-btn">Next</button>
+        </div>
+      </mat-step>
+
+      <!-- PAGE 2: Education & Profession -->
+      <mat-step [stepControl]="educationForm">
+        <ng-template matStepLabel>Career</ng-template>
+        <form [formGroup]="educationForm" class="step-content">
+          <h3 class="section-title">Education & Profession</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Education (படிப்பு)</mat-label>
+            <input matInput formControlName="education" required class="tamil-text">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Profession (தொழில்)</mat-label>
+            <input matInput formControlName="profession" required class="tamil-text">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Company</mat-label>
+            <input matInput formControlName="company">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Monthly Income</mat-label>
+            <input matInput formControlName="monthlyIncome" type="number">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Work Location</mat-label>
+            <input matInput formControlName="workLocation">
+          </mat-form-field>
+
+        </form>
+        <div class="sticky-footer">
+          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
+          <button mat-raised-button color="primary" matStepperNext [disabled]="educationForm.invalid"
+            class="action-btn">Next</button>
+        </div>
+      </mat-step>
+
+      <!-- PAGE 3: Horoscope Details -->
+      <mat-step [stepControl]="horoscopeDetailsForm">
+        <ng-template matStepLabel>Horoscope</ng-template>
+        <form [formGroup]="horoscopeDetailsForm" class="step-content">
+          <h3 class="section-title">Horoscope Details</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Zodiac (ராசி)</mat-label>
+            <mat-select formControlName="zodiac" required>
+              <mat-option *ngFor="let z of zodiacOptions" [value]="z" class="tamil-text">{{z}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Star (நட்சத்திரம்)</mat-label>
+            <mat-select formControlName="star" required>
+              <mat-option *ngFor="let s of starOptions" [value]="s" class="tamil-text">{{s}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Paatham (பாதம்)</mat-label>
+            <mat-select formControlName="paatham" required>
+              <mat-option *ngFor="let p of paathamOptions" [value]="p" class="tamil-text">{{p}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Dosham (தோஷம்)</mat-label>
+            <mat-select formControlName="dosham" required>
+              <mat-option *ngFor="let d of doshamOptions" [value]="d" class="tamil-text">{{d}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="file-upload-section">
+            <label>Jatham Image</label>
+            <div class="upload-box dashed-border" (click)="jathamInput.click()">
+              <mat-icon>cloud_upload</mat-icon>
+              <span>{{ jathamPreviewUrl ? 'Image Selected' : 'Browse Files' }}</span>
+              <small *ngIf="jathamPreviewUrl">{{jathamPreviewUrl}}</small>
+            </div>
+            <input hidden (change)="onJathamImageSelected($event)" #jathamInput type="file" accept="image/*">
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Matching Star (பொருதும் நட்சத்திரம்)</mat-label>
+            <mat-select formControlName="matchingStar" multiple>
+              <mat-option *ngFor="let ms of matchingStarOptions" [value]="ms" class="tamil-text">{{ms}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+        </form>
+        <div class="sticky-footer">
+          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
+          <button mat-raised-button color="primary" matStepperNext [disabled]="horoscopeDetailsForm.invalid"
+            class="action-btn">Next</button>
+        </div>
+      </mat-step>
+
+      <!-- PAGE 4: Contact & Personal -->
+      <mat-step [stepControl]="personalContactForm">
+        <ng-template matStepLabel>Contact</ng-template>
+        <form [formGroup]="personalContactForm" class="step-content">
+          <h3 class="section-title">Contact & Personal</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contact Person Name</mat-label>
+            <input matInput formControlName="contactPersonName" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Contact Type</mat-label>
+            <mat-select formControlName="contactType" required>
+              <mat-option *ngFor="let c of contactTypeOptions" [value]="c">{{c}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Mobile Number</mat-label>
+            <input matInput formControlName="mobileNumber" type="tel" required maxlength="10">
+            <mat-error>Valid 10-digit number required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Property Value (சொத்து மதிப்பு)</mat-label>
+            <mat-select formControlName="propertyValue" required>
+              <mat-option *ngFor="let p of propertyValueOptions" [value]="p">{{p}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Expectation (விருப்பம்)</mat-label>
+            <textarea matInput formControlName="expectation" rows="3"></textarea>
+          </mat-form-field>
+
+        </form>
+        <div class="sticky-footer">
+          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
+          <button mat-raised-button color="primary" matStepperNext [disabled]="personalContactForm.invalid"
+            class="action-btn">Next</button>
+        </div>
+      </mat-step>
+
+      <!-- PAGE 5: Physical Details -->
+      <mat-step [stepControl]="physicalDetailsForm">
+        <ng-template matStepLabel>Physical</ng-template>
+        <form [formGroup]="physicalDetailsForm" class="step-content">
+          <h3 class="section-title">Physical Details</h3>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Height</mat-label>
+            <mat-select formControlName="height">
+              <mat-option *ngFor="let h of heightOptions" [value]="h">{{h}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Weight</mat-label>
+            <mat-select formControlName="weight">
+              <mat-option *ngFor="let w of weightOptions" [value]="w">{{w}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Color (நிறம்)</mat-label>
+            <mat-select formControlName="color">
+              <mat-option *ngFor="let c of colorOptions" [value]="c" class="tamil-text">{{c}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Food Option</mat-label>
+            <mat-select formControlName="foodOption">
+              <mat-option *ngFor="let f of foodOptions" [value]="f" class="tamil-text">{{f}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </form>
+
+        <div class="sticky-footer">
+          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
+          <button mat-raised-button color="primary" matStepperNext class="action-btn">Next</button>
+        </div>
+      </mat-step>
+
+      <!-- PAGE 6: Photo -->
+      <mat-step [stepControl]="profilePhotoForm">
+        <ng-template matStepLabel>Photo</ng-template>
+        <form [formGroup]="profilePhotoForm" class="step-content">
+          <h3 class="section-title">Profile Photo</h3>
+
+          <div class="photo-upload-container">
+            <div class="avatar-preview-wrapper">
+              <img [src]="profilePreviewUrl" alt="Profile Preview" class="avatar-preview">
+            </div>
+
+            <button type="button" mat-flat-button color="accent" (click)="fileInput.click()">
+              <mat-icon>cloud_upload</mat-icon> Upload Photo
+            </button>
+            <input hidden (change)="onProfilePhotoSelected($event)" #fileInput type="file" accept="image/*">
+
+            <p *ngIf="profilePhotoForm.get('photo')?.invalid && profilePhotoForm.get('photo')?.touched"
+              class="error-text">
+              Profile photo is required.
+            </p>
+          </div>
+
+        </form>
+
+        <div class="sticky-footer">
+          <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
+          <button type="button" mat-raised-button color="primary" class="action-btn" (click)="onSubmit()"
+            [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Submitting...' : 'Submit' }}
+          </button>
+        </div>
+      </mat-step>
+
+    </mat-stepper>
+  </mat-card>
+</div>

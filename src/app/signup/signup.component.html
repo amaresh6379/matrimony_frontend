@@ -1,0 +1,283 @@
+<div class="signup-container">
+    <div class="header-section">
+        <h2>Create Your Profile</h2>
+        <p>Register Free to find your perfect partner</p>
+    </div>
+
+    <mat-stepper orientation="vertical" [linear]="true" #stepper>
+
+        <!-- STEP 1: Basic Profile -->
+        <mat-step [stepControl]="basicForm">
+            <form [formGroup]="basicForm">
+                <ng-template matStepLabel>Basic Details</ng-template>
+
+                <div class="radio-group-container">
+                    <label>Gender: </label>
+                    <mat-radio-group formControlName="gender">
+                        <mat-radio-button value="MALE">Male</mat-radio-button>
+                        <mat-radio-button value="FEMALE">Female</mat-radio-button>
+                    </mat-radio-group>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Name</mat-label>
+                    <input matInput formControlName="name" placeholder="Enter Full Name">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Date of Birth</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="dob">
+                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Mobile Number</mat-label>
+                    <input matInput formControlName="mobileNumber" type="tel" maxlength="10">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Password</mat-label>
+                    <input matInput formControlName="password" type="password">
+                </mat-form-field>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Marital Status</mat-label>
+                        <mat-select formControlName="martialStatus">
+                            <mat-option value="UNMARRIED">Unmarried</mat-option>
+                            <mat-option value="DIVORCED">Divorced</mat-option>
+                            <mat-option value="WIDOWED">Widowed</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Religion</mat-label>
+                        <mat-select formControlName="religion">
+                            <mat-option value="HINDU">Hindu</mat-option>
+                            <mat-option value="CHRISTIAN">Christian</mat-option>
+                            <mat-option value="MUSLIM">Muslim</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Native Place</mat-label>
+                        <input matInput formControlName="nativePlace">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>District</mat-label>
+                        <mat-select formControlName="districtId">
+                            <mat-option *ngFor="let dist of districts" [value]="dist.id">
+                                {{dist.districtName}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                    <button mat-raised-button color="primary" (click)="saveProfile()"
+                        [disabled]="basicForm.invalid || isLoading">
+                        {{ isLoading ? 'Saving...' : 'Next' }}
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- STEP 2: Career -->
+        <mat-step [stepControl]="careerForm">
+            <form [formGroup]="careerForm">
+                <ng-template matStepLabel>Career Details</ng-template>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Education</mat-label>
+                    <input matInput formControlName="educationDetails" placeholder="Ex: BE, MBA">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Profession</mat-label>
+                    <input matInput formControlName="profession" placeholder="Ex: Software Engineer">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Company Name</mat-label>
+                    <input matInput formControlName="companyName">
+                </mat-form-field>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Monthly Income</mat-label>
+                        <input matInput type="number" formControlName="monthyIncome">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Work Location</mat-label>
+                        <input matInput formControlName="workLocation">
+                    </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                    <button mat-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="primary" (click)="saveCareer()"
+                        [disabled]="careerForm.invalid || isLoading">
+                        Next
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- STEP 3: Family -->
+        <mat-step [stepControl]="familyForm">
+            <form [formGroup]="familyForm">
+                <ng-template matStepLabel>Family Details</ng-template>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Father Name</mat-label>
+                    <input matInput formControlName="fatherName">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Mother Name</mat-label>
+                    <input matInput formControlName="motherName">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Father Mobile</mat-label>
+                    <input matInput type="tel" formControlName="fatherMobileNumber">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Mother Mobile</mat-label>
+                    <input matInput type="tel" formControlName="motherMobileNumber">
+                </mat-form-field>
+
+                <div class="step-actions">
+                    <button mat-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="primary" (click)="saveFamily()"
+                        [disabled]="familyForm.invalid || isLoading">
+                        Next
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- STEP 4: Zodiac -->
+        <mat-step [stepControl]="zodiacForm">
+            <form [formGroup]="zodiacForm">
+                <ng-template matStepLabel>Horoscope Details</ng-template>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Zodiac (Rasi)</mat-label>
+                        <mat-select formControlName="zodiacId">
+                            <mat-option *ngFor="let z of zodiacs" [value]="z.id">
+                                {{z.zodiacName}} ({{z.zodiacTamil}})
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Star (Natchathiram)</mat-label>
+                        <mat-select formControlName="starId">
+                            <mat-option *ngFor="let s of stars" [value]="s.id">
+                                {{s.starName}} ({{s.starTamil}})
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Patham</mat-label>
+                    <input matInput formControlName="patham" placeholder="1, 2, 3, 4">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Jathagam Image URL</mat-label>
+                    <input matInput formControlName="jathagamImage" placeholder="http://...">
+                </mat-form-field>
+
+                <div class="step-actions">
+                    <button mat-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="primary" (click)="saveZodiac()"
+                        [disabled]="zodiacForm.invalid || isLoading">
+                        Next
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- STEP 5: Personal -->
+        <mat-step [stepControl]="personalForm">
+            <form [formGroup]="personalForm">
+                <ng-template matStepLabel>Personal Details</ng-template>
+
+                <div class="row-fields">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Height</mat-label>
+                        <mat-select formControlName="heightId">
+                            <mat-option *ngFor="let h of heights" [value]="h.id">
+                                {{h.heightName}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Weight</mat-label>
+                        <mat-select formControlName="weightId">
+                            <mat-option *ngFor="let w of weights" [value]="w.id">
+                                {{w.weightName}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Skin Tone</mat-label>
+                    <input matInput formControlName="skinTone">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Interests</mat-label>
+                    <input matInput formControlName="Interest" placeholder="Hobbies, inputs...">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Assets</mat-label>
+                    <input matInput formControlName="asset" placeholder="House, Land...">
+                </mat-form-field>
+
+                <div class="step-actions">
+                    <button mat-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="primary" (click)="savePersonal()"
+                        [disabled]="personalForm.invalid || isLoading">
+                        Next
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- STEP 6: Profile Image -->
+        <mat-step [stepControl]="imageForm">
+            <form [formGroup]="imageForm">
+                <ng-template matStepLabel>Profile Photo</ng-template>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Profile Image URL</mat-label>
+                    <input matInput formControlName="profileUrl" placeholder="https://...">
+                    <mat-hint>Paste a direct link to your photo</mat-hint>
+                </mat-form-field>
+
+                <div class="step-actions">
+                    <button mat-button matStepperPrevious>Back</button>
+                    <button mat-raised-button color="accent" (click)="saveImage()"
+                        [disabled]="imageForm.invalid || isLoading">
+                        Finish Registration
+                    </button>
+                </div>
+            </form>
+        </mat-step>
+
+    </mat-stepper>
+</div>

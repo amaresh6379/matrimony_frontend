@@ -1,0 +1,253 @@
+// Variables for consistent theming
+$primary-color: #3f51b5;
+$accent-color: #e91e63;
+$bg-color: #ffffff;
+$text-color: #333333;
+$border-radius: 12px;
+$card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 16px;
+    background-color: #f5f7fa;
+    padding-bottom: 80px; // Space for sticky footer
+}
+
+.form-card {
+    width: 100%;
+    max-width: 500px; // Mobile friendly max width
+    border-radius: $border-radius;
+    box-shadow: $card-shadow;
+    padding: 0; // Padding handled by stepper
+    // overflow: hidden; // REMOVED to allow sticky header
+    background: white;
+}
+
+.header-branding {
+    text-align: center;
+    padding: 20px 16px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    color: $text-color;
+    border-radius: $border-radius $border-radius 0 0; // Maintain top corners
+
+    // Sticky Header styles
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); // Optional: adds subtle shadow when sticking
+
+    .logo-area {
+        margin-bottom: 12px;
+    }
+
+    .main-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: #D32F2F;
+        line-height: 1.3;
+
+        @media (min-width: 600px) {
+            font-size: 28px;
+        }
+    }
+
+    .contact-info {
+        font-size: 12px;
+        color: #555;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+
+        p {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        mat-icon {
+            font-size: 14px;
+            height: 14px;
+            width: 14px;
+            vertical-align: middle;
+            color: $primary-color;
+        }
+    }
+}
+
+.section-title {
+    color: $primary-color;
+    font-size: 18px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    font-weight: 500;
+}
+
+.step-content {
+    padding: 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px; // Vertical spacing between fields
+}
+
+.full-width {
+    width: 100%;
+}
+
+// Customizing Material Form Field for cleaner look
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    // optional: adjust spacing if needed
+}
+
+// Tamil Text Support
+.tamil-text {
+    font-family: 'Mukta Malar', sans-serif;
+}
+
+// Sticky Footer for Mobile
+.sticky-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 16px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1); // Upward shadow
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    z-index: 1000;
+
+    // Constrain width on larger screens to match form
+    @media (min-width: 600px) {
+        position: static;
+        box-shadow: none;
+        padding-top: 24px;
+        margin-top: auto;
+    }
+
+    .action-btn {
+        flex: 1;
+        height: 48px; // Tappable area
+        font-size: 16px;
+        border-radius: 24px; // Rounded buttons
+    }
+}
+
+// Photo Upload Styling
+.photo-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 32px 0;
+}
+
+.avatar-preview-wrapper {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+
+    .avatar-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.error-text {
+    color: #f44336;
+    font-size: 12px;
+    margin-top: -16px;
+}
+
+// Radio Group Styling
+.gender-radio-group {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    margin-bottom: 16px;
+    margin-top: 8px;
+}
+
+.radio-label {
+    display: block;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 4px;
+}
+
+.required {
+    color: red;
+}
+
+// File Upload Area (Dashed Box)
+.file-upload-section {
+    margin-bottom: 16px;
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.6);
+    }
+}
+
+.upload-box {
+    border: 2px dashed #ccc;
+    border-radius: $border-radius;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    background: #fafafa;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: $primary-color;
+        background: lighten($primary-color, 45%);
+    }
+
+    mat-icon {
+        font-size: 32px;
+        height: 32px;
+        width: 32px;
+        color: #757575;
+    }
+
+    span {
+        font-size: 14px;
+        color: $text-color;
+        font-weight: 500;
+    }
+
+    small {
+        color: $primary-color;
+        font-style: italic;
+    }
+}
+
+// Mobile specific tweaks for Stepper Header
+@media (max-width: 480px) {
+    ::ng-deep .mat-step-header {
+        padding: 12px !important;
+    }
+
+    ::ng-deep .mat-step-label {
+        display: none !important; // Hide labels on very small screens, keep icons/circles
+    }
+}

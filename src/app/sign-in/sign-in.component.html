@@ -1,0 +1,48 @@
+<div class="login-container">
+    <mat-card class="login-card">
+        <mat-card-header>
+            <mat-card-title>Member Login</mat-card-title>
+            <mat-card-subtitle>Vaniya Chettiyar Kalyana Malai</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Matrimony ID / Mobile Number</mat-label>
+                    <input matInput formControlName="matrimonyId" placeholder="Ex: VCM1">
+                    <mat-icon matSuffix>person</mat-icon>
+                    <mat-error *ngIf="loginForm.get('matrimonyId')?.hasError('required')">
+                        ID is required
+                    </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Password</mat-label>
+                    <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
+                    <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
+                        <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                    <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+                        Password is required
+                    </mat-error>
+                </mat-form-field>
+
+                <div class="error-box" *ngIf="errorMsg">
+                    {{errorMsg}}
+                </div>
+
+                <button mat-raised-button color="primary" class="login-btn" type="submit"
+                    [disabled]="loginForm.invalid || isLoading">
+                    {{ isLoading ? 'Checking...' : 'Sign In' }}
+                </button>
+
+            </form>
+
+            <div class="footer-links">
+                <a routerLink="/signup">New User? Register Free</a>
+                <a href="#">Forgot Password?</a>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>

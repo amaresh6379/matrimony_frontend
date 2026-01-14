@@ -1,1 +1,33 @@
-/* You can add global styles to this file, and also import other style files */
+/* Prebuilt Theme Loaded in angular.json */
+@use '@angular/material' as mat;
+@include mat.core();
+
+/* Global Styles */
+
+/* Global Styles */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+    background-color: #f5f7fa;
+    /* Light grey background for modern feel */
+}
+
+/* Typography for Tamil Support */
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.tamil-text {
+    font-family: 'Mukta Malar', sans-serif;
+    /* Example fallback if needed, but system fonts usually handle Tamil */
+}
+
+/* Card-like container for mobile */
+.container {
+    padding: 16px;
+    max-width: 600px;
+    /* Mobile focused but capable of desktop */
+    margin: 0 auto;
+}
