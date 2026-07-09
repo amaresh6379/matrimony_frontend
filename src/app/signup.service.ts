@@ -1,12 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
+import { environment } from '../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class SignupService {
-    private baseUrl = 'http://54.92.214.248:5000/v1';
+    private baseUrl = environment.apiUrl;
 
     // State to track the Profile ID created in Step 1
     currentProfileId = signal<number | null>(null);

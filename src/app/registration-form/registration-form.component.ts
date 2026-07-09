@@ -13,6 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 import {
     MARITAL_STATUS, RELIGION, DISTRICTS, ZODIAC, STAR, PAATHAM, DOSHAM, CONTACT_TYPE, PROPERTY_VALUE,
@@ -225,7 +226,7 @@ export class RegistrationFormComponent {
             }
 
             // API Call
-            this._http.post('http://54.92.214.248:5000/v1/profile/form', formData).subscribe({
+            this._http.post(`${environment.apiUrl}/profile/form`, formData).subscribe({
                 next: (res) => {
                     console.log('Success:', res);
                     alert('Registration Submitted Successfully!');

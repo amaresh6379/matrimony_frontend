@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map } from 'rxjs';
+import { environment } from '../environments/environment';
 
 interface LoginResponse {
     result: {
@@ -14,7 +15,7 @@ interface LoginResponse {
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'http://54.92.214.248:5000/v1/auth/login';
+    private apiUrl = `${environment.apiUrl}/auth/login`;
 
     // Reactive State
     isLoggedIn = signal<boolean>(false);
