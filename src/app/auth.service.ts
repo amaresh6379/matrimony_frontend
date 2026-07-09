@@ -7,6 +7,8 @@ interface LoginResponse {
     result: {
         success: boolean;
         status: string;
+        token?: string;
+        userId?: number;
     };
     success: boolean;
 }
@@ -21,7 +23,15 @@ export class AuthService {
     isLoggedIn = signal<boolean>(false);
     currentUser = signal<any>(null);
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {
+        const token = localStorage.getItem('auth_token');
+        const userId = localStorage.getItem('user_id');
+        const matrimonyId = localStorage.getItem('matrimony_id');
+        if (token && userId) {
+            this.isLoggedIn.set(true);
+            this.currentUser.set({ id: Number(userId), matrimonyId });
+        }
+    }
 
     login(matrimonyId: string, password: string): Observable<{ success: boolean, message?: string }> {
         const payload = {
@@ -31,22 +41,18 @@ export class AuthService {
 
         return this.http.post<LoginResponse>(this.apiUrl, payload).pipe(
             map(response => {
-                // Check both top-level success and nested result.success based on payload structure
-                // Payload: { "result": { "success": false, "status": "INVALID" }, "success": true }
-                // It seems 'success: true' generally means the API call worked, but result.success indicates logic.
-                // Wait, typical structure might be result.success = true for valid login. 
-                // Let's assume result.status === 'VALID' or result.success === true is the key.
-
-                // Based on user request: 
-                // Failure: { "result": { "success": false, "status": "INVALID" }, "success": true }
-
                 if (response.result && response.result.success) {
-                    this.isLoggedIn.set(true);
-                    this.currentUser.set({ id: matrimonyId }); // Mock user object for now
-                    return { success: true };
-                } else {
-                    return { success: false, message: response.result?.status || 'Invalid Credentials' };
+                    const resData = response.result;
+                    if (resData.token && resData.userId) {
+                        localStorage.setItem('auth_token', resData.token);
+                        localStorage.setItem('user_id', resData.userId.toString());
+                        localStorage.setItem('matrimony_id', matrimonyId);
+                        this.isLoggedIn.set(true);
+                        this.currentUser.set({ id: resData.userId, matrimonyId: matrimonyId });
+                        return { success: true };
+                    }
                 }
+                return { success: false, message: response.result?.status || 'Invalid Credentials' };
             }),
             catchError(error => {
                 console.error('Login Error:', error);
@@ -56,7 +62,11 @@ export class AuthService {
     }
 
     logout() {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('matrimony_id');
         this.isLoggedIn.set(false);
         this.currentUser.set(null);
     }
 }
+

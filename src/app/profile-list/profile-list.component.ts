@@ -12,9 +12,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar'; // For completion %
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
+import { SignupService } from '../signup.service';
+import { environment } from '../../environments/environment';
 
 interface Profile {
-    id: string;
+    id: string;      // Matrimony ID
+    dbId?: number;   // Numeric Database ID
     name: string;
     age: number;
     image: string;
@@ -53,12 +56,14 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     private _fb = inject(FormBuilder);
     private router = inject(Router);
     private authService = inject(AuthService);
+    private signupService = inject(SignupService);
 
     get isLoggedIn() {
         return this.authService.isLoggedIn();
     }
 
-    userProfileCompletion = 75; // Mock percentage for logged in user
+    userProfileCompletion = 0;
+    sentInterestsCache: any[] = []; // In-memory cache of sent interests to fetch contact numbers
 
     // Pagination
     totalProfiles = 0;
@@ -78,8 +83,13 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     });
 
     ngOnInit() {
-        this.generateMockProfiles();
-        this.updateVisibleProfiles();
+        if (this.isLoggedIn) {
+            this.loadProfilePercentage();
+            this.loadBackendData();
+        } else {
+            this.generateMockProfiles();
+            this.updateVisibleProfiles();
+        }
 
         this.filterForm.valueChanges.subscribe(() => {
             this.pageIndex = 0;
@@ -89,6 +99,100 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit() { }
+
+    loadProfilePercentage() {
+        const userId = this.authService.currentUser()?.id;
+        if (userId) {
+            this.signupService.getProfilePercentage(userId).subscribe({
+                next: (res: any) => {
+                    if (res && typeof res.result === 'number') {
+                        this.userProfileCompletion = res.result;
+                    }
+                },
+                error: (err) => console.error('Error loading profile percentage', err)
+            });
+        }
+    }
+
+    loadBackendData() {
+        const userId = this.authService.currentUser()?.id;
+        if (!userId) return;
+
+        // Fetch sent interests first so we know which profiles we liked & to cache details
+        this.signupService.getSentInterests(userId).subscribe({
+            next: (res: any) => {
+                this.sentInterestsCache = res.result || [];
+                const sentIds = this.sentInterestsCache.map((x: any) => x.likedProfileId);
+                this.loadMatchedProfiles(sentIds);
+            },
+            error: (err) => {
+                console.error('Error fetching sent interests', err);
+                this.loadMatchedProfiles([]);
+            }
+        });
+    }
+
+    loadMatchedProfiles(sentIds: number[]) {
+        // Fetch up to 100 profiles to filter and paginate locally
+        this.signupService.getMatchingList(100, 0).subscribe({
+            next: (res: any) => {
+                const raw = res.result || [];
+                this.allProfiles = raw.map((p: any) => {
+                    const mapped = this.mapBackendProfile(p);
+                    mapped.interestSent = sentIds.includes(p.id);
+                    return mapped;
+                });
+                this.updateVisibleProfiles();
+            },
+            error: (err) => {
+                console.error('Error fetching matching profiles', err);
+            }
+        });
+    }
+
+    mapBackendProfile(p: any): Profile {
+        const career = p.careerDetails?.[0] || {};
+        const zodiacDetail = p.zodiacDetails?.[0] || {};
+
+        const age = this.calculateAge(p.dob);
+        const img = p.matrimonyId
+            ? `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${p.matrimonyId}.jpg`
+            : 'https://dummyimage.com/300x300/cccccc/757575.png';
+
+        const education = Array.isArray(career.educationDetails)
+            ? career.educationDetails.join(', ')
+            : (career.educationDetails || '-');
+
+        return {
+            id: p.matrimonyId || `MM${p.id}`,
+            dbId: p.id,
+            name: p.name,
+            age: age,
+            image: img,
+            zodiac: zodiacDetail.zodiac?.zodiacTamil || '-',
+            star: zodiacDetail.star?.starTamil || '-',
+            native: p.nativePlace || '-',
+            education: education,
+            profession: career.profession || '-',
+            location: career.workLocation || p.nativePlace || '-',
+            salary: career.monthyIncome ? career.monthyIncome.toLocaleString('en-IN') : '-',
+            maritalStatus: p.martialStatus || '-',
+            dosham: zodiacDetail.dosham || 'Suddha Jathagam',
+            interestSent: false
+        };
+    }
+
+    calculateAge(dob: string | Date): number {
+        if (!dob) return 0;
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
 
     generateMockProfiles() {
         const baseProfiles: Profile[] = [
@@ -164,6 +268,10 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     toggleLogin() {
         if (this.isLoggedIn) {
             this.authService.logout();
+            // Re-generate mock data on logout
+            this.allProfiles = [];
+            this.generateMockProfiles();
+            this.updateVisibleProfiles();
         } else {
             this.router.navigate(['/login']);
         }
@@ -173,7 +281,27 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     viewContact(profile: Profile) {
         if (this.isLoggedIn) {
-            alert(`Contact Name: ${profile.name}\nPhone: +91 98765 43210`);
+            // Find in cache to grab the mobile number
+            const sentMatch = this.sentInterestsCache.find(x => x.likedProfileId === profile.dbId);
+            if (sentMatch && sentMatch.Receiver?.mobileNumber) {
+                alert(`Contact Name: ${profile.name}\nPhone: +91 ${sentMatch.Receiver.mobileNumber}`);
+            } else if (profile.interestSent) {
+                // If it is sent but not in immediate cache (due to delay/fetch lag), fetch sent list dynamically
+                const userId = this.authService.currentUser()?.id;
+                if (userId) {
+                    this.signupService.getSentInterests(userId).subscribe((res: any) => {
+                        this.sentInterestsCache = res.result || [];
+                        const freshMatch = this.sentInterestsCache.find(x => x.likedProfileId === profile.dbId);
+                        if (freshMatch && freshMatch.Receiver?.mobileNumber) {
+                            alert(`Contact Name: ${profile.name}\nPhone: +91 ${freshMatch.Receiver.mobileNumber}`);
+                        } else {
+                            alert(`Contact Number not loaded. Please try again.`);
+                        }
+                    });
+                }
+            } else {
+                alert(`Interested in ${profile.name}? Send them an Interest first to unlock their contact number!`);
+            }
         } else {
             this.navigateToRegister();
         }
@@ -181,14 +309,17 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     downloadMyProfile() {
         if (this.isLoggedIn) {
-            alert('Downloading Your Profile Card (PDF/Image)...');
-            // Logic: Generate PDF of current user or fetch from backend
+            const userId = this.authService.currentUser()?.id;
+            if (!userId) return;
+            const url = `${environment.apiUrl}/profile/${userId}/download`;
+            window.open(url, '_blank');
         }
     }
 
     shareMyProfileWhatsapp() {
         if (this.isLoggedIn) {
-            const text = "Check out my profile on Vaniya Chettiyar Kalyana Malai! ID: MY12345";
+            const matId = this.authService.currentUser()?.matrimonyId || 'MY';
+            const text = `Check out my profile on Vaniya Chettiyar Kalyana Malai! ID: ${matId}`;
             const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         }
@@ -196,25 +327,75 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     editMyProfile() {
         if (this.isLoggedIn) {
-            alert('Navigating to Edit Profile...');
+            // We can navigate to sign up or registration form to complete profile details
+            this.router.navigate(['/register']);
         }
     }
 
     sendInterest(profile: Profile) {
         if (this.isLoggedIn) {
-            profile.interestSent = true;
-            alert(`Interest sent to ${profile.name}!`);
+            const loggedInUserId = this.authService.currentUser()?.id;
+            if (!loggedInUserId || !profile.dbId) return;
+
+            this.signupService.sendInterest(profile.dbId, loggedInUserId).subscribe({
+                next: (res) => {
+                    profile.interestSent = true;
+                    alert(res.message || `Interest sent to ${profile.name}!`);
+                    // Refresh sent list cache to access the number
+                    this.signupService.getSentInterests(loggedInUserId).subscribe((r: any) => {
+                        this.sentInterestsCache = r.result || [];
+                    });
+                },
+                error: (err) => {
+                    console.error(err);
+                    alert('Failed to send interest. Please try again.');
+                }
+            });
         } else {
             this.navigateToRegister();
         }
     }
 
     viewSentInterests() {
-        alert('Showing IDs you have sent interest to...');
+        const userId = this.authService.currentUser()?.id;
+        if (!userId) return;
+
+        this.signupService.getSentInterests(userId).subscribe({
+            next: (res: any) => {
+                const raw = res.result || [];
+                if (raw.length === 0) {
+                    alert('You have not sent interests to any profiles yet.');
+                    return;
+                }
+                const names = raw.map((x: any) => `${x.Receiver?.name || 'Unknown'} (${x.Receiver?.matrimonyId || ''}) - Phone: ${x.Receiver?.mobileNumber || 'Locked'}`).join('\n');
+                alert(`Profiles you have sent interest to:\n\n${names}`);
+            },
+            error: (err) => {
+                console.error(err);
+                alert('Error loading sent interests.');
+            }
+        });
     }
 
     viewReceivedInterests() {
-        alert('Showing IDs who are interested in you...');
+        const userId = this.authService.currentUser()?.id;
+        if (!userId) return;
+
+        this.signupService.getReceivedInterests(userId).subscribe({
+            next: (res: any) => {
+                const raw = res.result || [];
+                if (raw.length === 0) {
+                    alert('No profiles have sent interest in you yet.');
+                    return;
+                }
+                const names = raw.map((x: any) => `${x.Sender?.name || 'Unknown'} (${x.Sender?.matrimonyId || ''}) - Phone: ${x.Sender?.mobileNumber || 'Hidden'}`).join('\n');
+                alert(`Profiles interested in you:\n\n${names}`);
+            },
+            error: (err) => {
+                console.error(err);
+                alert('Error loading received interests.');
+            }
+        });
     }
 
     navigateToRegister() {

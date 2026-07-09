@@ -81,7 +81,6 @@ export class SignupService {
         if (!id) throw new Error('Profile ID not found');
         return this.http.post(`${this.baseUrl}/profile/${id}/personal`, data);
     }
-
     // --- Step 6: Profile Image ---
     saveProfileImage(data: any): Observable<any> {
         const id = this.currentProfileId();
@@ -89,4 +88,29 @@ export class SignupService {
         return this.http.post(`${this.baseUrl}/profile/${id}/profileImage`, data);
     }
 
+    // --- Matches & Interests ---
+    getMatchingList(limit: number = 10, offset: number = 0, filters?: any): Observable<any> {
+        let url = `${this.baseUrl}/match?limit=${limit}&offset=${offset}`;
+        if (filters) {
+            url += `&filterData=${encodeURIComponent(JSON.stringify(filters))}`;
+        }
+        return this.http.get<any>(url);
+    }
+
+    sendInterest(likedProfileId: number, loggedInUserId: number): Observable<any> {
+        return this.http.put<any>(`${this.baseUrl}/match/${loggedInUserId}?interestId=${likedProfileId}`, {});
+    }
+
+    getSentInterests(loggedInUserId: number): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/match/${loggedInUserId}/sent`);
+    }
+
+    getReceivedInterests(loggedInUserId: number): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/match/${loggedInUserId}/received`);
+    }
+
+    getProfilePercentage(loggedInUserId: number): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/profile/${loggedInUserId}/profilePercentage`);
+    }
 }
+

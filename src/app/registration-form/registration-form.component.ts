@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -14,6 +14,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { SignupService } from '../signup.service';
 
 import {
     MARITAL_STATUS, RELIGION, DISTRICTS, ZODIAC, STAR, PAATHAM, DOSHAM, CONTACT_TYPE, PROPERTY_VALUE,
@@ -42,9 +43,10 @@ import {
     templateUrl: './registration-form.component.html',
     styleUrl: './registration-form.component.scss'
 })
-export class RegistrationFormComponent {
+export class RegistrationFormComponent implements OnInit {
     private _formBuilder = inject(FormBuilder);
     private _http = inject(HttpClient);
+    private _signupService = inject(SignupService);
 
     // Data Constants
     maritalStatusOptions = MARITAL_STATUS;
@@ -61,6 +63,56 @@ export class RegistrationFormComponent {
     weightOptions = WEIGHTS;
     colorOptions = COLORS;
     foodOptions = FOOD_OPTIONS;
+
+    ngOnInit() {
+        this.loadDynamicOptions();
+    }
+
+    loadDynamicOptions() {
+        this._signupService.getDistricts().subscribe({
+            next: (data) => {
+                if (data && data.length) {
+                    this.districtOptions = data.map(d => d.districtName);
+                }
+            },
+            error: (err) => console.error('Error loading districts:', err)
+        });
+        this._signupService.getZodiacs().subscribe({
+            next: (data) => {
+                if (data && data.length) {
+                    this.zodiacOptions = data.map(z => z.zodiacTamil);
+                }
+            },
+            error: (err) => console.error('Error loading zodiacs:', err)
+        });
+        this._signupService.getStars().subscribe({
+            next: (data) => {
+                if (data && data.length) {
+                    const mapped = data.map(s => s.starTamil);
+                    this.starOptions = mapped;
+                    this.matchingStarOptions = mapped;
+                }
+            },
+            error: (err) => console.error('Error loading stars:', err)
+        });
+        this._signupService.getHeights().subscribe({
+            next: (data) => {
+                if (data && data.length) {
+                    this.heightOptions = data.map(h => h.heightName);
+                }
+            },
+            error: (err) => console.error('Error loading heights:', err)
+        });
+        this._signupService.getWeights().subscribe({
+            next: (data) => {
+                if (data && data.length) {
+                    this.weightOptions = data.map(w => w.weightName);
+                }
+            },
+            error: (err) => console.error('Error loading weights:', err)
+        });
+    }
+
 
     // PAGE 1: Basic Details
     basicDetailsForm = this._formBuilder.group({
