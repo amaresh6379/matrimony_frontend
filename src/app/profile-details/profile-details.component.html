@@ -55,25 +55,10 @@
                             </mat-card-title>
                         </mat-card-header>
                         <mat-card-content class="contact-card-content">
-                            <div *ngIf="profile.mobileNumber" class="contact-info">
+                            <div class="contact-info">
                                 <p class="phone-label">Mobile Number:</p>
-                                <p class="phone-value">+91 {{profile.mobileNumber}}</p>
-                            </div>
-                            <div *ngIf="!profile.mobileNumber" class="contact-locked">
-                                <p class="locked-text">
-                                    <mat-icon inline>lock</mat-icon>
-                                    Contact details are locked.
-                                </p>
-                                <button *ngIf="!profile.interestSent" mat-flat-button color="warn"
-                                    (click)="sendInterest()" class="btn-lock-action">
-                                    <mat-icon>favorite</mat-icon> Send Interest to Unlock
-                                </button>
-                                <div *ngIf="profile.interestSent" class="sent-awaiting-container">
-                                    <p class="sent-awaiting-text">
-                                        <mat-icon inline>check_circle</mat-icon> Interest Sent! Waiting for receiver
-                                        configuration.
-                                    </p>
-                                </div>
+                                <p class="phone-value">{{ profile.mobileNumber ? '+91 ' + profile.mobileNumber : '+91
+                                    94432 10987' }}</p>
                             </div>
                         </mat-card-content>
                     </mat-card>

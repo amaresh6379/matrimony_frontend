@@ -70,9 +70,20 @@
             <mat-error>Valid 10-digit number required</mat-error>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="full-width" *ngIf="isSignupMode">
+            <mat-label>Password</mat-label>
+            <input matInput formControlName="password" type="password" required>
+            <mat-error>Password is required</mat-error>
+          </mat-form-field>
+
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Father's Name</mat-label>
             <input matInput formControlName="fatherName" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width" *ngIf="isSignupMode">
+            <mat-label>Father's Mobile Number</mat-label>
+            <input matInput formControlName="fatherMobileNumber" type="tel" maxlength="10">
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -80,10 +91,17 @@
             <input matInput formControlName="motherName" required>
           </mat-form-field>
 
+          <mat-form-field appearance="outline" class="full-width" *ngIf="isSignupMode">
+            <mat-label>Mother's Mobile Number</mat-label>
+            <input matInput formControlName="motherMobileNumber" type="tel" maxlength="10">
+          </mat-form-field>
+
         </form>
         <div class="sticky-footer">
-          <button mat-raised-button color="primary" matStepperNext [disabled]="basicDetailsForm.invalid"
-            class="action-btn">Next</button>
+          <button type="button" mat-raised-button color="primary" [disabled]="basicDetailsForm.invalid || isSubmitting"
+            (click)="goToNextStep(1)" class="action-btn">
+            {{ isSubmitting ? 'Saving...' : 'Next' }}
+          </button>
         </div>
       </mat-step>
 
@@ -120,9 +138,11 @@
 
         </form>
         <div class="sticky-footer">
-          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
-          <button mat-raised-button color="primary" matStepperNext [disabled]="educationForm.invalid"
-            class="action-btn">Next</button>
+          <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
+          <button type="button" mat-raised-button color="primary" [disabled]="educationForm.invalid || isSubmitting"
+            (click)="goToNextStep(2)" class="action-btn">
+            {{ isSubmitting ? 'Saving...' : 'Next' }}
+          </button>
         </div>
       </mat-step>
 
@@ -179,9 +199,11 @@
 
         </form>
         <div class="sticky-footer">
-          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
-          <button mat-raised-button color="primary" matStepperNext [disabled]="horoscopeDetailsForm.invalid"
-            class="action-btn">Next</button>
+          <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
+          <button type="button" mat-raised-button color="primary"
+            [disabled]="horoscopeDetailsForm.invalid || isSubmitting" (click)="goToNextStep(3)" class="action-btn">
+            {{ isSubmitting ? 'Saving...' : 'Next' }}
+          </button>
         </div>
       </mat-step>
 
@@ -223,9 +245,11 @@
 
         </form>
         <div class="sticky-footer">
-          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
-          <button mat-raised-button color="primary" matStepperNext [disabled]="personalContactForm.invalid"
-            class="action-btn">Next</button>
+          <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
+          <button type="button" mat-raised-button color="primary"
+            [disabled]="personalContactForm.invalid || isSubmitting" (click)="goToNextStep(4)" class="action-btn">
+            {{ isSubmitting ? 'Saving...' : 'Next' }}
+          </button>
         </div>
       </mat-step>
 
@@ -265,8 +289,11 @@
         </form>
 
         <div class="sticky-footer">
-          <button mat-stroked-button matStepperPrevious class="action-btn">Back</button>
-          <button mat-raised-button color="primary" matStepperNext class="action-btn">Next</button>
+          <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
+          <button type="button" mat-raised-button color="primary"
+            [disabled]="physicalDetailsForm.invalid || isSubmitting" (click)="goToNextStep(5)" class="action-btn">
+            {{ isSubmitting ? 'Saving...' : 'Next' }}
+          </button>
         </div>
       </mat-step>
 
@@ -277,16 +304,16 @@
           <h3 class="section-title">Profile Photo</h3>
 
           <div class="photo-upload-container">
-            <div class="avatar-preview-wrapper">
+            <div class="avatar-preview-wrapper animate-preview" *ngIf="!isSignupMode || profilePreviewUrl">
               <img [src]="profilePreviewUrl" alt="Profile Preview" class="avatar-preview">
             </div>
 
             <button type="button" mat-flat-button color="accent" (click)="fileInput.click()">
-              <mat-icon>cloud_upload</mat-icon> Upload Photo
+              <mat-icon>cloud_upload</mat-icon> {{ isSignupMode ? 'Upload Photo (Optional)' : 'Upload Photo' }}
             </button>
             <input hidden (change)="onProfilePhotoSelected($event)" #fileInput type="file" accept="image/*">
 
-            <p *ngIf="profilePhotoForm.get('photo')?.invalid && profilePhotoForm.get('photo')?.touched"
+            <p *ngIf="profilePhotoForm.get('photo')?.invalid && profilePhotoForm.get('photo')?.touched && !isSignupMode"
               class="error-text">
               Profile photo is required.
             </p>
@@ -297,7 +324,7 @@
         <div class="sticky-footer">
           <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
           <button type="button" mat-raised-button color="primary" class="action-btn" (click)="onSubmit()"
-            [disabled]="isSubmitting">
+            [disabled]="(!isSignupMode && profilePhotoForm.invalid) || isSubmitting">
             {{ isSubmitting ? 'Submitting...' : 'Submit' }}
           </button>
         </div>
