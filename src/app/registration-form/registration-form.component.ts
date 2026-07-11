@@ -266,9 +266,9 @@ export class RegistrationFormComponent implements OnInit {
         return found ? found.id : null;
     }
 
-    private async uploadFile(file: File, folder: string, customFileName?: string): Promise<string> {
+    private async uploadFile(file: File, folder: string, customFileName: string): Promise<string> {
         const extension = file.name.split('.').pop() || 'jpg';
-        const fileName = customFileName ? `${customFileName}.${extension}` : `temp-${Date.now()}.${extension}`;
+        const fileName = `${customFileName}.${extension}`;
 
         try {
             const res = await lastValueFrom(this._signupService.getSignedUrl(folder, fileName, file.type));
@@ -475,94 +475,111 @@ export class RegistrationFormComponent implements OnInit {
             this.personalContactForm.valid && this.physicalDetailsForm.valid && this.profilePhotoForm.valid) {
             this.isSubmitting = true;
 
-            const basic = this.basicDetailsForm.value;
-            const edu = this.educationForm.value;
-            const horo = this.horoscopeDetailsForm.value;
-            const contact = this.personalContactForm.value;
-            const physical = this.physicalDetailsForm.value;
-
-            let formattedDob = '';
-            if (basic.dob) {
-                const d = new Date(basic.dob);
-                const day = ('0' + d.getDate()).slice(-2);
-                const month = ('0' + (d.getMonth() + 1)).slice(-2);
-                const year = d.getFullYear();
-                formattedDob = `${day}-${month}-${year}`;
-            }
+            const basic = this.basicDetailsForm.value as any;
+            const edu = this.educationForm.value as any;
+            const horo = this.horoscopeDetailsForm.value as any;
+            const contact = this.personalContactForm.value as any;
+            const physical = this.physicalDetailsForm.value as any;
 
             try {
-                let photoUrl: string | null = null;
-                const photoFile = this.profilePhotoForm.get('photo')?.value as any;
-                if (photoFile) {
-                    photoUrl = await this.uploadFile(photoFile, 'profile/profileimage');
-                }
-
-                let jathamUrl: string | null = null;
-                const jathamFile = this.horoscopeDetailsForm.get('jathamImage')?.value as any;
-                if (jathamFile) {
-                    jathamUrl = await this.uploadFile(jathamFile, 'profile/jathagamimage');
-                }
-
-                const payload: any = {
-                    q36_gender: basic.gender,
-                    q64_name: basic.name,
-                    q25_date: formattedDob,
-                    q72_mobileNumber72: basic.mobileNumber,
-                    q34_martialStatus: basic.maritalStatus,
-                    q78_religion: basic.religion,
-                    q28_typeA: basic.nativePlace,
-                    q65_district: basic.district,
-                    q45_fathersName: basic.fatherName,
-                    q31_mothersName: basic.motherName,
-
-                    q38_education: edu.education,
-                    q39_profession: edu.profession,
-                    q40_company: edu.company,
-                    q41_monthlyIncome: edu.monthlyIncome,
-                    q42_workLocation: edu.workLocation,
-
-                    q47_zodiacnbsp: horo.zodiac,
-                    q48_starnbsp: horo.star,
-                    q49_input49: horo.paatham,
-                    q50_dosham: horo.dosham,
-
-                    q53_typeA53: contact.contactPersonName,
-                    q54_typeA54: contact.contactType,
-                    q55_mobileNumber: contact.mobileNumber,
-                    q56_input56: contact.propertyValue,
-                    q57_input57: contact.expectation,
-
-                    q73_height: physical.height,
-                    q74_weight: physical.weight,
-                    q60_color: physical.color,
-                    q61_foodOption: physical.foodOption
+                // 1. Create Profile first to generate matrimonyId
+                const profilePayload = {
+                    name: basic.name,
+                    gender: basic.gender === 'Male' ? 'MALE' : 'FEMALE',
+                    dob: this.formatDate(basic.dob),
+                    mobileNumber: basic.mobileNumber,
+                    password: basic.password || 'Admin@123',
+                    martialStatus: basic.maritalStatus === 'Unmarried' ? 'UNMARRIED' :
+                        basic.maritalStatus === 'Divorced' ? 'DIVORCED' :
+                            basic.maritalStatus === 'Divorced with Children' ? 'DIVORCED_WITH_CHILDREN' :
+                                basic.maritalStatus === 'Widow/Widower' ? 'WIDOW/WIDOWER' :
+                                    basic.maritalStatus === 'Widow/Widower with Children' ? 'WIDOW/WIDOWER_WITH_CHILDREN' :
+                                        basic.maritalStatus === 'Separated' ? 'SEPARATED' : 'SEPARATED_WITH_CHILDREN',
+                    religion: basic.religion?.toUpperCase(),
+                    nativePlace: basic.nativePlace,
+                    districtId: this.getDistrictId(basic.district)
                 };
 
-                if (photoUrl) {
-                    payload.photo = [photoUrl];
-                }
-                if (jathamUrl) {
-                    payload.jathamImage = [jathamUrl];
+                await lastValueFrom(this._signupService.createProfile(profilePayload));
+                const matrimonyId = this._signupService.currentMatrimonyId();
+                if (!matrimonyId) {
+                    throw new Error('Matrimony ID was not generated');
                 }
 
-                const formData = new FormData();
-                formData.append('rawRequest', JSON.stringify(payload));
+                // 2. Save Career Details
+                const careerPayload = {
+                    educationDetails: [edu.education],
+                    profession: edu.profession,
+                    companyName: edu.company || '',
+                    monthyIncome: edu.monthlyIncome ? Number(edu.monthlyIncome) : 0,
+                    workLocation: edu.workLocation || ''
+                };
+                await lastValueFrom(this._signupService.saveCareer(careerPayload));
 
-                this._http.post(`${environment.apiUrl}/profile/form`, formData).subscribe({
-                    next: (res) => {
-                        console.log('Success:', res);
-                        alert('Registration Submitted Successfully!');
-                        this.isSubmitting = false;
-                    },
-                    error: (err) => {
-                        console.error('Error:', err);
-                        alert('Submission Failed. Please try again.');
-                        this.isSubmitting = false;
-                    }
-                });
+                // 3. Upload Zodiac Image (if exists) & Save Zodiac Details
+                let uploadedZodiacUrl = null;
+                const zodiacFile = horo.jathamImage;
+                if (zodiacFile) {
+                    uploadedZodiacUrl = await this.uploadFile(zodiacFile, 'profile/jathagamimage', matrimonyId);
+                }
+
+                const zodiacPayload: any = {
+                    zodiacId: this.getZodiacId(horo.zodiac || ''),
+                    starId: this.getStarId(horo.star || ''),
+                    patham: horo.paatham?.match(/\d+/)?.[0] || '1',
+                    dosham: horo.dosham || 'சுத்த ஜாதகம்'
+                };
+                if (uploadedZodiacUrl) {
+                    zodiacPayload.jathgamImage = uploadedZodiacUrl;
+                }
+                await lastValueFrom(this._signupService.saveZodiac(zodiacPayload));
+
+                // 4. Save Family Details
+                const familyPayload = {
+                    fatherName: basic.fatherName,
+                    motherName: basic.motherName,
+                    fatherMobileNumber: basic.fatherMobileNumber || '',
+                    motherMobileNumber: basic.motherMobileNumber || '',
+                    contactPersonName: contact.contactPersonName,
+                    contactPersonNumber: contact.mobileNumber,
+                    contactPersonType: contact.contactType
+                };
+                await lastValueFrom(this._signupService.saveFamily(familyPayload));
+
+                // 5. Save Personal Details
+                const rawFood = physical.foodOption;
+                const foodOption = rawFood === 'சைவம்' ? 'VEG' :
+                    rawFood === 'அசைவம்' ? 'NONVEG' : 'SOMETIMES_NONVEG';
+
+                const personalPayload = {
+                    heightId: this.getHeightId(physical.height || ''),
+                    weightId: this.getWeightId(physical.weight || ''),
+                    skinTone: physical.color || '',
+                    foodOption: foodOption,
+                    Interest: contact.expectation || '',
+                    asset: contact.propertyValue || ''
+                };
+                await lastValueFrom(this._signupService.savePersonal(personalPayload));
+
+                // 6. Upload Photo (if exists) & Save Profile Image Details
+                let uploadedPhotoUrl = 'https://dummyimage.com/300x300/cccccc/757575.png';
+                const photoFile = this.profilePhotoForm.get('photo')?.value as File | null;
+                if (photoFile) {
+                    uploadedPhotoUrl = await this.uploadFile(photoFile, 'profile/profileimage', matrimonyId);
+                }
+
+                const photoPayload = {
+                    profileUrl: uploadedPhotoUrl
+                };
+                await lastValueFrom(this._signupService.saveProfileImage(photoPayload));
+
+                this.isSubmitting = false;
+                alert('Registration Completed Successfully!');
+                this._router.navigate(['/login']);
+
             } catch (err: any) {
                 this.isSubmitting = false;
-                alert('Upload failed: ' + (err.message || JSON.stringify(err)));
+                alert('Error completing registration: ' + (err.error?.message || err.message || JSON.stringify(err)));
             }
         } else {
             console.log('Form Invalid');
