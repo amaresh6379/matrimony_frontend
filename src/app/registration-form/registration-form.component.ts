@@ -288,11 +288,6 @@ export class RegistrationFormComponent implements OnInit {
     }
 
     async goToNextStep(currentStep: number) {
-        if (!this.isSignupMode) {
-            this.stepper.next();
-            return;
-        }
-
         this.isSubmitting = true;
 
         if (currentStep === 1) {
@@ -302,7 +297,7 @@ export class RegistrationFormComponent implements OnInit {
                 gender: basic.gender === 'Male' ? 'MALE' : 'FEMALE',
                 dob: this.formatDate(basic.dob),
                 mobileNumber: basic.mobileNumber,
-                password: basic.password,
+                password: basic.password || 'Admin@123',
                 martialStatus: basic.maritalStatus === 'Unmarried' ? 'UNMARRIED' :
                     basic.maritalStatus === 'Divorced' ? 'DIVORCED' :
                         basic.maritalStatus === 'Divorced with Children' ? 'DIVORCED_WITH_CHILDREN' :
@@ -437,153 +432,36 @@ export class RegistrationFormComponent implements OnInit {
     }
 
     async onSubmit() {
-        if (this.isSignupMode) {
-            this.isSubmitting = true;
-            const file = this.profilePhotoForm.get('photo')?.value as any;
-            try {
-                let uploadedUrl = 'https://dummyimage.com/300x300/cccccc/757575.png';
-                if (file) {
-                    const matrimonyId = this._signupService.currentMatrimonyId();
-                    if (!matrimonyId) {
-                        throw new Error('Matrimony ID not set from Step 1');
-                    }
-                    uploadedUrl = await this.uploadFile(file, 'profile/profileimage', matrimonyId);
-                }
-
-                const payload = {
-                    profileUrl: uploadedUrl
-                };
-                this._signupService.saveProfileImage(payload).subscribe({
-                    next: () => {
-                        this.isSubmitting = false;
-                        alert('Registration Completed Successfully!');
-                        this._router.navigate(['/login']);
-                    },
-                    error: (err) => {
-                        this.isSubmitting = false;
-                        alert('Submission Failed: ' + (err.error?.message || err.message || JSON.stringify(err)));
-                    }
-                });
-            } catch (err: any) {
-                this.isSubmitting = false;
-                alert('Error uploading profile photo: ' + (err.message || JSON.stringify(err)));
-            }
-            return;
-        }
-
-        if (this.basicDetailsForm.valid && this.educationForm.valid && this.horoscopeDetailsForm.valid &&
-            this.personalContactForm.valid && this.physicalDetailsForm.valid && this.profilePhotoForm.valid) {
-            this.isSubmitting = true;
-
-            const basic = this.basicDetailsForm.value as any;
-            const edu = this.educationForm.value as any;
-            const horo = this.horoscopeDetailsForm.value as any;
-            const contact = this.personalContactForm.value as any;
-            const physical = this.physicalDetailsForm.value as any;
-
-            try {
-                // 1. Create Profile first to generate matrimonyId
-                const profilePayload = {
-                    name: basic.name,
-                    gender: basic.gender === 'Male' ? 'MALE' : 'FEMALE',
-                    dob: this.formatDate(basic.dob),
-                    mobileNumber: basic.mobileNumber,
-                    password: basic.password || 'Admin@123',
-                    martialStatus: basic.maritalStatus === 'Unmarried' ? 'UNMARRIED' :
-                        basic.maritalStatus === 'Divorced' ? 'DIVORCED' :
-                            basic.maritalStatus === 'Divorced with Children' ? 'DIVORCED_WITH_CHILDREN' :
-                                basic.maritalStatus === 'Widow/Widower' ? 'WIDOW/WIDOWER' :
-                                    basic.maritalStatus === 'Widow/Widower with Children' ? 'WIDOW/WIDOWER_WITH_CHILDREN' :
-                                        basic.maritalStatus === 'Separated' ? 'SEPARATED' : 'SEPARATED_WITH_CHILDREN',
-                    religion: basic.religion?.toUpperCase(),
-                    nativePlace: basic.nativePlace,
-                    districtId: this.getDistrictId(basic.district)
-                };
-
-                await lastValueFrom(this._signupService.createProfile(profilePayload));
+        this.isSubmitting = true;
+        const file = this.profilePhotoForm.get('photo')?.value as any;
+        try {
+            let uploadedUrl = 'https://dummyimage.com/300x300/cccccc/757575.png';
+            if (file) {
                 const matrimonyId = this._signupService.currentMatrimonyId();
                 if (!matrimonyId) {
-                    throw new Error('Matrimony ID was not generated');
+                    throw new Error('Matrimony ID not set from Step 1');
                 }
-
-                // 2. Save Career Details
-                const careerPayload = {
-                    educationDetails: [edu.education],
-                    profession: edu.profession,
-                    companyName: edu.company || '',
-                    monthyIncome: edu.monthlyIncome ? Number(edu.monthlyIncome) : 0,
-                    workLocation: edu.workLocation || ''
-                };
-                await lastValueFrom(this._signupService.saveCareer(careerPayload));
-
-                // 3. Upload Zodiac Image (if exists) & Save Zodiac Details
-                let uploadedZodiacUrl = null;
-                const zodiacFile = horo.jathamImage;
-                if (zodiacFile) {
-                    uploadedZodiacUrl = await this.uploadFile(zodiacFile, 'profile/jathagamimage', matrimonyId);
-                }
-
-                const zodiacPayload: any = {
-                    zodiacId: this.getZodiacId(horo.zodiac || ''),
-                    starId: this.getStarId(horo.star || ''),
-                    patham: horo.paatham?.match(/\d+/)?.[0] || '1',
-                    dosham: horo.dosham || 'சுத்த ஜாதகம்'
-                };
-                if (uploadedZodiacUrl) {
-                    zodiacPayload.jathgamImage = uploadedZodiacUrl;
-                }
-                await lastValueFrom(this._signupService.saveZodiac(zodiacPayload));
-
-                // 4. Save Family Details
-                const familyPayload = {
-                    fatherName: basic.fatherName,
-                    motherName: basic.motherName,
-                    fatherMobileNumber: basic.fatherMobileNumber || '',
-                    motherMobileNumber: basic.motherMobileNumber || '',
-                    contactPersonName: contact.contactPersonName,
-                    contactPersonNumber: contact.mobileNumber,
-                    contactPersonType: contact.contactType
-                };
-                await lastValueFrom(this._signupService.saveFamily(familyPayload));
-
-                // 5. Save Personal Details
-                const rawFood = physical.foodOption;
-                const foodOption = rawFood === 'சைவம்' ? 'VEG' :
-                    rawFood === 'அசைவம்' ? 'NONVEG' : 'SOMETIMES_NONVEG';
-
-                const personalPayload = {
-                    heightId: this.getHeightId(physical.height || ''),
-                    weightId: this.getWeightId(physical.weight || ''),
-                    skinTone: physical.color || '',
-                    foodOption: foodOption,
-                    Interest: contact.expectation || '',
-                    asset: contact.propertyValue || ''
-                };
-                await lastValueFrom(this._signupService.savePersonal(personalPayload));
-
-                // 6. Upload Photo (if exists) & Save Profile Image Details
-                let uploadedPhotoUrl = 'https://dummyimage.com/300x300/cccccc/757575.png';
-                const photoFile = this.profilePhotoForm.get('photo')?.value as File | null;
-                if (photoFile) {
-                    uploadedPhotoUrl = await this.uploadFile(photoFile, 'profile/profileimage', matrimonyId);
-                }
-
-                const photoPayload = {
-                    profileUrl: uploadedPhotoUrl
-                };
-                await lastValueFrom(this._signupService.saveProfileImage(photoPayload));
-
-                this.isSubmitting = false;
-                alert('Registration Completed Successfully!');
-                this._router.navigate(['/login']);
-
-            } catch (err: any) {
-                this.isSubmitting = false;
-                alert('Error completing registration: ' + (err.error?.message || err.message || JSON.stringify(err)));
+                uploadedUrl = await this.uploadFile(file, 'profile/profileimage', matrimonyId);
             }
-        } else {
-            console.log('Form Invalid');
-            this.basicDetailsForm.markAllAsTouched();
+
+            const payload = {
+                profileUrl: uploadedUrl
+            };
+            this._signupService.saveProfileImage(payload).subscribe({
+                next: () => {
+                    this.isSubmitting = false;
+                    alert('Registration Completed Successfully!');
+                    this._router.navigate(['/login']);
+                },
+                error: (err) => {
+                    this.isSubmitting = false;
+                    alert('Submission Failed: ' + (err.error?.message || err.message || JSON.stringify(err)));
+                }
+            });
+        } catch (err: any) {
+            this.isSubmitting = false;
+            alert('Error uploading profile photo: ' + (err.message || JSON.stringify(err)));
         }
     }
 }
+
