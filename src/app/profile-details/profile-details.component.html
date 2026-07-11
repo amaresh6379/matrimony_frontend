@@ -1,0 +1,159 @@
+<div class="community-page">
+
+    <!-- Simple Header -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="logo-area">
+                <h1 class="tamil-title">வாணியச் செட்டியார் கல்யாண மாலை</h1>
+                <h2 class="english-title">Vaniya Chettiyar Kalyana Malai</h2>
+            </div>
+
+            <div class="user-nav">
+                <ng-container *ngIf="!isLoggedIn">
+                    <a (click)="navigateToRegister()">Free Register</a>
+                    <span class="divider">|</span>
+                    <a (click)="toggleLogin()">Login</a>
+                </ng-container>
+
+                <ng-container *ngIf="isLoggedIn">
+                    <a (click)="editMyProfile()">Edit Profile</a>
+                    <span class="divider">|</span>
+                    <a (click)="toggleLogin()">Logout</a>
+                </ng-container>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <!-- Back Navigation Button -->
+        <div class="back-bar">
+            <button mat-stroked-button (click)="goBack()" color="primary" class="back-btn">
+                <mat-icon>arrow_back</mat-icon> Back to Profile List
+            </button>
+        </div>
+
+        <div class="details-container" *ngIf="profile">
+            <!-- Left Side / Top: Profile Image & Core Stats Card -->
+            <div class="details-grid">
+                <div class="left-column">
+                    <mat-card class="image-card">
+                        <div class="profile-img-val">
+                            <img [src]="profile.image" [alt]="profile.name">
+                        </div>
+                        <mat-card-content class="image-card-content">
+                            <h2>{{profile.name}}</h2>
+                            <p class="matrimony-id">ID: {{profile.id}}</p>
+                            <span class="marital-badge">{{profile.maritalStatus}}</span>
+                        </mat-card-content>
+                    </mat-card>
+
+                    <!-- Contact Details Card -->
+                    <mat-card class="contact-card">
+                        <mat-card-header>
+                            <mat-card-title>
+                                <mat-icon>phone</mat-icon> Contact Information
+                            </mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content class="contact-card-content">
+                            <div *ngIf="profile.mobileNumber" class="contact-info">
+                                <p class="phone-label">Mobile Number:</p>
+                                <p class="phone-value">+91 {{profile.mobileNumber}}</p>
+                            </div>
+                            <div *ngIf="!profile.mobileNumber" class="contact-locked">
+                                <p class="locked-text">
+                                    <mat-icon inline>lock</mat-icon>
+                                    Contact details are locked.
+                                </p>
+                                <button *ngIf="!profile.interestSent" mat-flat-button color="warn"
+                                    (click)="sendInterest()" class="btn-lock-action">
+                                    <mat-icon>favorite</mat-icon> Send Interest to Unlock
+                                </button>
+                                <div *ngIf="profile.interestSent" class="sent-awaiting-container">
+                                    <p class="sent-awaiting-text">
+                                        <mat-icon inline>check_circle</mat-icon> Interest Sent! Waiting for receiver
+                                        configuration.
+                                    </p>
+                                </div>
+                            </div>
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+
+                <!-- Right Side: Details Blocks -->
+                <div class="right-column">
+                    <mat-card class="info-details-card">
+                        <mat-card-header>
+                            <mat-card-title>Profile Details</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            <!-- Personal Info Section -->
+                            <div class="section-block">
+                                <h3 class="section-title"><mat-icon>person</mat-icon> Personal Information</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="label">Name</span>
+                                        <span class="value">{{profile.name}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Age</span>
+                                        <span class="value">{{profile.age}} Years</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Marital Status</span>
+                                        <span class="value">{{profile.maritalStatus}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Native Place</span>
+                                        <span class="value">{{profile.native}}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Horoscope / Astrological Info Section -->
+                            <div class="section-block">
+                                <h3 class="section-title"><mat-icon>wb_sunny</mat-icon> Astrological Details</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="label">Raasi (Zodiac)</span>
+                                        <span class="value">{{profile.zodiac}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Star (Nakshatram)</span>
+                                        <span class="value">{{profile.star}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Dosham</span>
+                                        <span class="value">{{profile.dosham}}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Professional Info Section -->
+                            <div class="section-block font-block">
+                                <h3 class="section-title"><mat-icon>work</mat-icon> Professional Details</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="label">Education</span>
+                                        <span class="value">{{profile.education}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Profession</span>
+                                        <span class="value">{{profile.profession}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Work Location</span>
+                                        <span class="value">{{profile.location}}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Monthly Salary</span>
+                                        <span class="value">{{profile.salary}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

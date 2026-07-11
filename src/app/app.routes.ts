@@ -3,11 +3,13 @@ import { RegistrationFormComponent } from './registration-form/registration-form
 import { ProfileListComponent } from './profile-list/profile-list.component';
 import { SignInComponent } from './sign-in/sign-in.component';
 import { SignupComponent } from './signup/signup.component';
+import { ProfileDetailsComponent } from './profile-details/profile-details.component';
 
 export const routes: Routes = [
     { path: '', component: ProfileListComponent },
     { path: 'login', component: SignInComponent },
     { path: 'signup', component: SignupComponent },
     { path: 'register', component: RegistrationFormComponent },
-    { path: 'profiles', component: ProfileListComponent } // Keep alias if needed
+    { path: 'profiles', component: ProfileListComponent }, // Keep alias if needed
+    { path: 'profile-details', component: ProfileDetailsComponent }
 ];

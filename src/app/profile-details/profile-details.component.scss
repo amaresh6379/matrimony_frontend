@@ -1,0 +1,333 @@
+$bg-color: #f7f7f7;
+$border-color: #e0e0e0;
+$primary-text: #333;
+$secondary-text: #666;
+$theme-red: #d32f2f;
+$theme-blue: #1976d2;
+$theme-green: #388e3c;
+
+.community-page {
+    background: $bg-color;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+// Header
+.app-header {
+    background: white;
+    border-bottom: 2px solid $theme-red;
+    padding: 10px 15px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    .header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .logo-area {
+            .tamil-title {
+                margin: 0;
+                color: $theme-red;
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .english-title {
+                margin: 0;
+                color: $secondary-text;
+                font-size: 14px;
+            }
+        }
+
+        .user-nav {
+            font-size: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+
+            a {
+                cursor: pointer;
+                color: $theme-blue;
+                font-weight: 600;
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+
+            .divider {
+                color: #ccc;
+            }
+        }
+
+        @media (max-width: 600px) {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+    }
+}
+
+.main-content {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.back-bar {
+    margin-bottom: 20px;
+
+    .back-btn {
+        background-color: white;
+        border-color: $border-color;
+        color: $primary-text;
+        font-weight: 600;
+        
+        &:hover {
+            background-color: #eee;
+        }
+
+        mat-icon {
+            margin-right: 5px;
+        }
+    }
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.image-card {
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    background: white;
+
+    .profile-img-val {
+        width: 100%;
+        height: 350px;
+        overflow: hidden;
+        background: #eee;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .image-card-content {
+        padding: 20px;
+        text-align: center;
+
+        h2 {
+            margin: 0 0 5px 0;
+            font-size: 22px;
+            color: $primary-text;
+            font-weight: 700;
+        }
+
+        .matrimony-id {
+            margin: 0 0 12px 0;
+            color: $theme-blue;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .marital-badge {
+            display: inline-block;
+            background: #f0f0f0;
+            border: 1px solid $border-color;
+            color: #555;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+    }
+}
+
+.contact-card {
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    background: white;
+
+    mat-card-header {
+        background-color: #f8f8f8;
+        border-bottom: 1px solid #eee;
+        padding: 12px 15px;
+
+        mat-card-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: $primary-text;
+
+            mat-icon {
+                color: $theme-blue;
+            }
+        }
+    }
+
+    .contact-card-content {
+        padding: 20px;
+
+        .contact-info {
+            .phone-label {
+                margin: 0;
+                color: $secondary-text;
+                font-size: 13px;
+            }
+
+            .phone-value {
+                margin: 5px 0 0 0;
+                color: $theme-green;
+                font-size: 20px;
+                font-weight: 700;
+            }
+        }
+
+        .contact-locked {
+            text-align: center;
+
+            .locked-text {
+                margin: 0 0 15px 0;
+                color: $theme-red;
+                font-weight: 600;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            .btn-lock-action {
+                width: 100%;
+                font-weight: 600;
+                background-color: $theme-red;
+                color: white;
+
+                &:hover {
+                    background-color: darken($theme-red, 5%);
+                }
+            }
+
+            .sent-awaiting-container {
+                background: #fff8f8;
+                border: 1px dashed $theme-red;
+                padding: 10px;
+                border-radius: 4px;
+
+                .sent-awaiting-text {
+                    margin: 0;
+                    color: $theme-red;
+                    font-size: 13px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                }
+            }
+        }
+    }
+}
+
+.info-details-card {
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    background: white;
+
+    mat-card-header {
+        background-color: #f8f8f8;
+        border-bottom: 1px solid #eee;
+        padding: 15px 20px;
+
+        mat-card-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: $theme-red;
+        }
+    }
+
+    mat-card-content {
+        padding: 20px;
+    }
+
+    .section-block {
+        margin-bottom: 30px;
+
+        &:last-child {
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: $theme-blue;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+            }
+        }
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px 20px;
+
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+
+            .label {
+                font-size: 12px;
+                color: $secondary-text;
+                margin-bottom: 3px;
+            }
+
+            .value {
+                font-size: 14px;
+                color: $primary-text;
+                font-weight: 600;
+            }
+        }
+    }
+}

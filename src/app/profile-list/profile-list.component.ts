@@ -281,27 +281,16 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     viewContact(profile: Profile) {
         if (this.isLoggedIn) {
-            // Find in cache to grab the mobile number
             const sentMatch = this.sentInterestsCache.find(x => x.likedProfileId === profile.dbId);
-            if (sentMatch && sentMatch.Receiver?.mobileNumber) {
-                alert(`Contact Name: ${profile.name}\nPhone: +91 ${sentMatch.Receiver.mobileNumber}`);
-            } else if (profile.interestSent) {
-                // If it is sent but not in immediate cache (due to delay/fetch lag), fetch sent list dynamically
-                const userId = this.authService.currentUser()?.id;
-                if (userId) {
-                    this.signupService.getSentInterests(userId).subscribe((res: any) => {
-                        this.sentInterestsCache = res.result || [];
-                        const freshMatch = this.sentInterestsCache.find(x => x.likedProfileId === profile.dbId);
-                        if (freshMatch && freshMatch.Receiver?.mobileNumber) {
-                            alert(`Contact Name: ${profile.name}\nPhone: +91 ${freshMatch.Receiver.mobileNumber}`);
-                        } else {
-                            alert(`Contact Number not loaded. Please try again.`);
-                        }
-                    });
+            const mobileNumber = sentMatch?.Receiver?.mobileNumber || null;
+            this.router.navigate(['/profile-details'], {
+                state: {
+                    profile: {
+                        ...profile,
+                        mobileNumber: mobileNumber
+                    }
                 }
-            } else {
-                alert(`Interested in ${profile.name}? Send them an Interest first to unlock their contact number!`);
-            }
+            });
         } else {
             this.navigateToRegister();
         }
