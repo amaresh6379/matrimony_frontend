@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { SignupService } from '../signup.service';
+import { lastValueFrom } from 'rxjs';
 
 import {
     MARITAL_STATUS, RELIGION, DISTRICTS, ZODIAC, STAR, PAATHAM, DOSHAM, CONTACT_TYPE, PROPERTY_VALUE,
@@ -265,7 +266,28 @@ export class RegistrationFormComponent implements OnInit {
         return found ? found.id : null;
     }
 
-    goToNextStep(currentStep: number) {
+    private async uploadFile(file: File, folder: string, customFileName?: string): Promise<string> {
+        const extension = file.name.split('.').pop() || 'jpg';
+        const fileName = customFileName ? `${customFileName}.${extension}` : `temp-${Date.now()}.${extension}`;
+
+        try {
+            const res = await lastValueFrom(this._signupService.getSignedUrl(folder, fileName, file.type));
+            const signedUrl = res?.result?.signedUrl;
+            const publicUrl = res?.result?.publicUrl;
+
+            if (!signedUrl || !publicUrl) {
+                throw new Error('Failed to retrieve signed URL');
+            }
+
+            await lastValueFrom(this._signupService.uploadFileToS3(signedUrl, file));
+            return publicUrl;
+        } catch (err: any) {
+            console.error('File upload error: ', err);
+            throw err;
+        }
+    }
+
+    async goToNextStep(currentStep: number) {
         if (!this.isSignupMode) {
             this.stepper.next();
             return;
@@ -326,23 +348,39 @@ export class RegistrationFormComponent implements OnInit {
         }
         else if (currentStep === 3) {
             const horo = this.horoscopeDetailsForm.value;
-            const payload = {
+            const file = horo.jathamImage as any;
+            this.isSubmitting = true;
+
+            const payload: any = {
                 zodiacId: this.getZodiacId(horo.zodiac || ''),
                 starId: this.getStarId(horo.star || ''),
                 patham: horo.paatham?.match(/\d+/)?.[0] || '1',
                 dosham: horo.dosham || 'சுத்த ஜாதகம்'
             };
 
-            this._signupService.saveZodiac(payload).subscribe({
-                next: () => {
-                    this.isSubmitting = false;
-                    this.stepper.next();
-                },
-                error: (err) => {
-                    this.isSubmitting = false;
-                    alert('Error saving zodiac details: ' + (err.error?.message || err.message || JSON.stringify(err)));
+            try {
+                if (file) {
+                    const matrimonyId = this._signupService.currentMatrimonyId();
+                    if (!matrimonyId) {
+                        throw new Error('Matrimony ID not set from Step 1');
+                    }
+                    payload.jathgamImage = await this.uploadFile(file, 'profile/jathagamimage', matrimonyId);
                 }
-            });
+
+                this._signupService.saveZodiac(payload).subscribe({
+                    next: () => {
+                        this.isSubmitting = false;
+                        this.stepper.next();
+                    },
+                    error: (err) => {
+                        this.isSubmitting = false;
+                        alert('Error saving zodiac details: ' + (err.error?.message || err.message || JSON.stringify(err)));
+                    }
+                });
+            } catch (err: any) {
+                this.isSubmitting = false;
+                alert('Error uploading zodiac image: ' + (err.message || JSON.stringify(err)));
+            }
         }
         else if (currentStep === 4) {
             const contact = this.personalContactForm.value;
@@ -398,23 +436,38 @@ export class RegistrationFormComponent implements OnInit {
         }
     }
 
-    onSubmit() {
+    async onSubmit() {
         if (this.isSignupMode) {
             this.isSubmitting = true;
-            const payload = {
-                profileUrl: 'https://dummyimage.com/300x300/cccccc/757575.png'
-            };
-            this._signupService.saveProfileImage(payload).subscribe({
-                next: () => {
-                    this.isSubmitting = false;
-                    alert('Registration Completed Successfully!');
-                    this._router.navigate(['/login']);
-                },
-                error: (err) => {
-                    this.isSubmitting = false;
-                    alert('Submission Failed: ' + (err.error?.message || err.message || JSON.stringify(err)));
+            const file = this.profilePhotoForm.get('photo')?.value as any;
+            try {
+                let uploadedUrl = 'https://dummyimage.com/300x300/cccccc/757575.png';
+                if (file) {
+                    const matrimonyId = this._signupService.currentMatrimonyId();
+                    if (!matrimonyId) {
+                        throw new Error('Matrimony ID not set from Step 1');
+                    }
+                    uploadedUrl = await this.uploadFile(file, 'profile/profileimage', matrimonyId);
                 }
-            });
+
+                const payload = {
+                    profileUrl: uploadedUrl
+                };
+                this._signupService.saveProfileImage(payload).subscribe({
+                    next: () => {
+                        this.isSubmitting = false;
+                        alert('Registration Completed Successfully!');
+                        this._router.navigate(['/login']);
+                    },
+                    error: (err) => {
+                        this.isSubmitting = false;
+                        alert('Submission Failed: ' + (err.error?.message || err.message || JSON.stringify(err)));
+                    }
+                });
+            } catch (err: any) {
+                this.isSubmitting = false;
+                alert('Error uploading profile photo: ' + (err.message || JSON.stringify(err)));
+            }
             return;
         }
 
@@ -437,66 +490,80 @@ export class RegistrationFormComponent implements OnInit {
                 formattedDob = `${day}-${month}-${year}`;
             }
 
-            const payload = {
-                q36_gender: basic.gender,
-                q64_name: basic.name,
-                q25_date: formattedDob,
-                q72_mobileNumber72: basic.mobileNumber,
-                q34_martialStatus: basic.maritalStatus,
-                q78_religion: basic.religion,
-                q28_typeA: basic.nativePlace,
-                q65_district: basic.district,
-                q45_fathersName: basic.fatherName,
-                q31_mothersName: basic.motherName,
-
-                q38_education: edu.education,
-                q39_profession: edu.profession,
-                q40_company: edu.company,
-                q41_monthlyIncome: edu.monthlyIncome,
-                q42_workLocation: edu.workLocation,
-
-                q47_zodiacnbsp: horo.zodiac,
-                q48_starnbsp: horo.star,
-                q49_input49: horo.paatham,
-                q50_dosham: horo.dosham,
-
-                q53_typeA53: contact.contactPersonName,
-                q54_typeA54: contact.contactType,
-                q55_mobileNumber: contact.mobileNumber,
-                q56_input56: contact.propertyValue,
-                q57_input57: contact.expectation,
-
-                q73_height: physical.height,
-                q74_weight: physical.weight,
-                q60_color: physical.color,
-                q61_foodOption: physical.foodOption
-            };
-
-            const formData = new FormData();
-            formData.append('rawRequest', JSON.stringify(payload));
-
-            const photoFile = this.profilePhotoForm.get('photo')?.value;
-            if (photoFile) {
-                formData.append('photo', photoFile);
-            }
-
-            const jathamFile = this.horoscopeDetailsForm.get('jathamImage')?.value;
-            if (jathamFile) {
-                formData.append('jathamImage', jathamFile);
-            }
-
-            this._http.post(`${environment.apiUrl}/profile/form`, formData).subscribe({
-                next: (res) => {
-                    console.log('Success:', res);
-                    alert('Registration Submitted Successfully!');
-                    this.isSubmitting = false;
-                },
-                error: (err) => {
-                    console.error('Error:', err);
-                    alert('Submission Failed. Please try again.');
-                    this.isSubmitting = false;
+            try {
+                let photoUrl: string | null = null;
+                const photoFile = this.profilePhotoForm.get('photo')?.value as any;
+                if (photoFile) {
+                    photoUrl = await this.uploadFile(photoFile, 'profile/profileimage');
                 }
-            });
+
+                let jathamUrl: string | null = null;
+                const jathamFile = this.horoscopeDetailsForm.get('jathamImage')?.value as any;
+                if (jathamFile) {
+                    jathamUrl = await this.uploadFile(jathamFile, 'profile/jathagamimage');
+                }
+
+                const payload: any = {
+                    q36_gender: basic.gender,
+                    q64_name: basic.name,
+                    q25_date: formattedDob,
+                    q72_mobileNumber72: basic.mobileNumber,
+                    q34_martialStatus: basic.maritalStatus,
+                    q78_religion: basic.religion,
+                    q28_typeA: basic.nativePlace,
+                    q65_district: basic.district,
+                    q45_fathersName: basic.fatherName,
+                    q31_mothersName: basic.motherName,
+
+                    q38_education: edu.education,
+                    q39_profession: edu.profession,
+                    q40_company: edu.company,
+                    q41_monthlyIncome: edu.monthlyIncome,
+                    q42_workLocation: edu.workLocation,
+
+                    q47_zodiacnbsp: horo.zodiac,
+                    q48_starnbsp: horo.star,
+                    q49_input49: horo.paatham,
+                    q50_dosham: horo.dosham,
+
+                    q53_typeA53: contact.contactPersonName,
+                    q54_typeA54: contact.contactType,
+                    q55_mobileNumber: contact.mobileNumber,
+                    q56_input56: contact.propertyValue,
+                    q57_input57: contact.expectation,
+
+                    q73_height: physical.height,
+                    q74_weight: physical.weight,
+                    q60_color: physical.color,
+                    q61_foodOption: physical.foodOption
+                };
+
+                if (photoUrl) {
+                    payload.photo = [photoUrl];
+                }
+                if (jathamUrl) {
+                    payload.jathamImage = [jathamUrl];
+                }
+
+                const formData = new FormData();
+                formData.append('rawRequest', JSON.stringify(payload));
+
+                this._http.post(`${environment.apiUrl}/profile/form`, formData).subscribe({
+                    next: (res) => {
+                        console.log('Success:', res);
+                        alert('Registration Submitted Successfully!');
+                        this.isSubmitting = false;
+                    },
+                    error: (err) => {
+                        console.error('Error:', err);
+                        alert('Submission Failed. Please try again.');
+                        this.isSubmitting = false;
+                    }
+                });
+            } catch (err: any) {
+                this.isSubmitting = false;
+                alert('Upload failed: ' + (err.message || JSON.stringify(err)));
+            }
         } else {
             console.log('Form Invalid');
             this.basicDetailsForm.markAllAsTouched();

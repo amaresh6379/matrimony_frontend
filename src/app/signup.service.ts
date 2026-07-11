@@ -11,6 +11,7 @@ export class SignupService {
 
     // State to track the Profile ID created in Step 1
     currentProfileId = signal<number | null>(null);
+    currentMatrimonyId = signal<string | null>(null);
 
     constructor(private http: HttpClient) { }
 
@@ -18,15 +19,14 @@ export class SignupService {
     createProfile(data: any): Observable<any> {
         return this.http.post(`${this.baseUrl}/profile`, data).pipe(
             tap((res: any) => {
-                // Assuming the response contains the ID. The user example didn't show output for Step 1 explicitly,
-                // but implied subsequent calls use /profile/13/... so we need to capture ID.
-                // Let's assume response.result.id or response.id or similar. 
-                // I will log it and try to find 'id' in the response.
-                // Common pattern: res.result.id
-                if (res && res.result && res.result.id) {
-                    this.currentProfileId.set(res.result.id);
-                } else if (res && res.id) {
-                    this.currentProfileId.set(res.id);
+                const result = res?.result || res;
+                if (result) {
+                    if (result.id) {
+                        this.currentProfileId.set(result.id);
+                    }
+                    if (result.matrimonyId) {
+                        this.currentMatrimonyId.set(result.matrimonyId);
+                    }
                 }
             })
         );
@@ -86,6 +86,18 @@ export class SignupService {
         const id = this.currentProfileId();
         if (!id) throw new Error('Profile ID not found');
         return this.http.post(`${this.baseUrl}/profile/${id}/profileImage`, data);
+    }
+
+    getSignedUrl(folder: string, fileName: string, contentType: string): Observable<any> {
+        return this.http.get<any>(`${this.baseUrl}/profile/signed-url?folder=${folder}&fileName=${fileName}&contentType=${contentType}`);
+    }
+
+    uploadFileToS3(signedUrl: string, file: File): Observable<any> {
+        return this.http.put(signedUrl, file, {
+            headers: {
+                'Content-Type': file.type
+            }
+        });
     }
 
     // --- Matches & Interests ---
