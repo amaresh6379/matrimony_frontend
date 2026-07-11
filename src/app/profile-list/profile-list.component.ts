@@ -155,9 +155,9 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         const zodiacDetail = p.zodiacDetails?.[0] || {};
 
         const age = this.calculateAge(p.dob);
-        const img = p.matrimonyId
-            ? `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${p.matrimonyId}.jpg`
-            : 'https://dummyimage.com/300x300/cccccc/757575.png';
+        const img = p.profileImages?.[0]?.profileUrl ||
+            p.profileimages?.[0]?.profileUrl ||
+            (p.matrimonyId ? `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${p.matrimonyId}.jpg` : 'https://dummyimage.com/300x300/cccccc/757575.png');
 
         const education = Array.isArray(career.educationDetails)
             ? career.educationDetails.join(', ')
