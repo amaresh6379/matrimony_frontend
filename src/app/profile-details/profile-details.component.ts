@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +25,7 @@ export class ProfileDetailsComponent implements OnInit {
     private router = inject(Router);
     private authService = inject(AuthService);
     private signupService = inject(SignupService);
+    private route = inject(ActivatedRoute);
 
     profile: any = null;
 
@@ -33,9 +34,8 @@ export class ProfileDetailsComponent implements OnInit {
     }
 
     ngOnInit() {
-        const state = history.state;
-        if (state && state.profile) {
-            this.profile = state.profile;
+        if (this.route.snapshot.params['id']) {
+            this.loadProfileDetails(this.route.snapshot.params['id']);
         } else {
             // Redirect to profile list if no profile data is supplied
             this.router.navigate(['/profiles']);
@@ -91,5 +91,29 @@ export class ProfileDetailsComponent implements OnInit {
 
     navigateToRegister() {
         this.router.navigate(['/signup']);
+    }
+
+    loadProfileDetails(id: number) {
+        this.signupService.getProfileDetails(id).subscribe({
+            next: (res) => {
+                this.profile = res.result;
+            },
+            error: (err) => {
+                console.error(err);
+                alert('Failed to load profile details. Please try again.');
+            }
+        });
+
+    }
+    getAge(dob: string): number | string {
+        if (!dob) return '-';
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
     }
 }

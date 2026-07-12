@@ -124,5 +124,16 @@ export class SignupService {
     getProfilePercentage(loggedInUserId: number): Observable<any> {
         return this.http.get<any>(`${this.baseUrl}/profile/${loggedInUserId}/profilePercentage`);
     }
+
+    getProfileList(limit: number = 10, offset: number = 0, filters?: any): Observable<any> {
+        let url = `${this.baseUrl}/match/profile-list?limit=${limit}&offset=${offset}`;
+        if (filters) {
+            url += `&filterData=${encodeURIComponent(JSON.stringify(filters))}`;
+        }
+        return this.http.get<any>(url);
+    }
+    getProfileDetails(id: number) {
+        return this.http.get<any>(`${this.baseUrl}/profile/${id}`);
+    }
 }
 

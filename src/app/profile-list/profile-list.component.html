@@ -23,7 +23,22 @@
             </div>
         </div>
     </header>
-
+    <div class="ad-banner">
+        <div class="ad-banner-inner">
+            <div class="ad-text">
+                <strong>Register your profile</strong>
+                <span>Find your perfect match today &mdash; thousands of verified profiles waiting</span>
+            </div>
+            <div class="ad-actions">
+                <button class="ad-register-btn" (click)="navigateToRegister()">
+                    Register Now
+                </button>
+                <button class="ad-call-btn" (click)="callAdvertiser()">
+                    Call 89039 60263
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- User Stats / Dashboard Bar (Only when Logged In) -->
     <div class="user-stats-bar" *ngIf="isLoggedIn">
         <div class="completion-section">
@@ -111,29 +126,56 @@
                     </div>
 
                     <div class="info-container">
-                        <h3 class="p-name">{{profile.name}} <small>({{profile.age}} Yrs)</small></h3>
+                        <h3 class="p-name">{{profile.name}} <small>{{profile.age}} yrs &bull; {{profile.height}}</small>
+                        </h3>
 
-                        <div class="detail-row">
-                            <span class="label">Edu:</span>
-                            <span class="val">{{profile.education}}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="label">Job:</span>
-                            <span class="val">{{profile.profession}}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="label">Place:</span>
-                            <span class="val">{{profile.location}}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="label">Star:</span>
-                            <span class="val">{{profile.star}}</span>
+                        <div class="zodiac-details">
+                            <div class="detail-row">
+                                <span class="dl">star</span>
+                                <span class="tag" *ngIf="profile.star !== '-'">
+                                    {{profile.star}}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="dl">Zodiac</span>
+                                <span class="tag" *ngIf="profile.zodiac !== '-'">{{profile.zodiac}}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="dl">Dosham</span>
+                                <span class="tag tag-dosham" *ngIf="profile.dosham !== '-'"> {{profile.dosham}}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <div class="box-details">
+                    <div class="detail-row">
+                        <span class="dl">Education</span>
+                        <span class="val">{{profile.education}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="dl">Profession</span>
+                        <span class="val">{{profile.profession}}<ng-container *ngIf="profile.companyName !== '-'">
+                                &middot; {{profile.companyName}}</ng-container></span>
+                    </div>
+                    <div class="detail-row" *ngIf="profile.salary !== '-'">
+                        <span class="dl">Income</span>
+                        <span class="val">{{profile.salary}} / month</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="dl">Location</span>
+                        <span class="val">{{profile.location}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="dl">Religion</span>
+                        <span class="val">{{profile.religion}} &bull; {{profile.native}}</span>
+                    </div>
+                    <div class="detail-row" *ngIf="profile.foodOption !== '-'">
+                        <span class="dl">Diet</span>
+                        <span class="val">{{profile.foodOption}}</span>
+                    </div>
+                </div>
+
                 <div class="box-footer">
-                    <!-- If Not Logged In -->
                     <ng-container *ngIf="!isLoggedIn">
                         <button class="btn-primary full-width" (click)="navigateToRegister()">
                             Register to Contact
@@ -143,10 +185,8 @@
                         </button>
                     </ng-container>
 
-                    <!-- If Logged In -->
                     <ng-container *ngIf="isLoggedIn">
                         <div class="icon-row">
-                            <!-- Removed Download Button from here -->
                             <button class="action-icon-btn" title="Send Interest" [class.sent]="profile.interestSent"
                                 (click)="sendInterest(profile)">
                                 <mat-icon>{{ profile.interestSent ? 'favorite' : 'favorite_border' }}</mat-icon>
@@ -162,8 +202,8 @@
         </div>
 
         <!-- Pagination -->
-        <mat-paginator [length]="totalProfiles" [pageSize]="pageSize" [pageSizeOptions]="[10, 20]"
-            (page)="handlePageEvent($event)">
+        <mat-paginator [length]="totalProfiles" [pageSize]="pageSize" [pageIndex]="pageIndex"
+            [pageSizeOptions]="[10, 20]" (page)="handlePageEvent($event)">
         </mat-paginator>
 
     </div>

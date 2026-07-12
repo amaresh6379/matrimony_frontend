@@ -10,5 +10,5 @@ export const routes: Routes = [
     { path: 'signup', component: RegistrationFormComponent, data: { isSignupMode: true } },
     { path: 'register', component: RegistrationFormComponent, data: { isSignupMode: false } },
     { path: 'profiles', component: ProfileListComponent }, // Keep alias if needed
-    { path: 'profile-details', component: ProfileDetailsComponent }
+    { path: 'profile-details/:id', component: ProfileDetailsComponent }
 ];

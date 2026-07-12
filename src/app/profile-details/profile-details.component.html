@@ -33,17 +33,19 @@
         </div>
 
         <div class="details-container" *ngIf="profile">
-            <!-- Left Side / Top: Profile Image & Core Stats Card -->
             <div class="details-grid">
+
+                <!-- Left Column -->
                 <div class="left-column">
                     <mat-card class="image-card">
                         <div class="profile-img-val">
-                            <img [src]="profile.image" [alt]="profile.name">
+                            <img [src]="profile.profileImages?.[0]?.profileUrl || 'assets/images/no-profile.png'"
+                                [alt]="profile.name">
                         </div>
                         <mat-card-content class="image-card-content">
-                            <h2>{{profile.name}}</h2>
-                            <p class="matrimony-id">ID: {{profile.id}}</p>
-                            <span class="marital-badge">{{profile.maritalStatus}}</span>
+                            <h2>{{ profile.name }}</h2>
+                            <p class="matrimony-id">ID: {{ profile.matrimonyId }}</p>
+                            <span class="marital-badge">{{ profile.martialStatus }}</span>
                         </mat-card-content>
                     </mat-card>
 
@@ -57,84 +59,206 @@
                         <mat-card-content class="contact-card-content">
                             <div class="contact-info">
                                 <p class="phone-label">Mobile Number:</p>
-                                <p class="phone-value">{{ profile.mobileNumber ? '+91 ' + profile.mobileNumber : '+91
-                                    94432 10987' }}</p>
+                                <p class="phone-value">{{ profile.mobileNumber ? '+91 ' + profile.mobileNumber : '-' }}
+                                </p>
                             </div>
+
+                            <ng-container *ngIf="profile.parentDetails?.[0] as parent">
+                                <div class="contact-info" *ngIf="parent.contactPersonNumber">
+                                    <p class="phone-label">{{ parent.contactPersonType || 'Contact Person' }} ({{
+                                        parent.contactPersonName }}):</p>
+                                    <p class="phone-value">+91 {{ parent.contactPersonNumber }}</p>
+                                </div>
+                            </ng-container>
+                        </mat-card-content>
+                    </mat-card>
+
+                    <!-- Horoscope Image Card -->
+                    <mat-card class="contact-card" *ngIf="profile.zodiacDetails?.[0]?.jathgamImage">
+                        <mat-card-header>
+                            <mat-card-title>
+                                <mat-icon>image</mat-icon> Horoscope (Jathagam)
+                            </mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content class="contact-card-content">
+                            <img [src]="profile.zodiacDetails[0].jathgamImage" alt="Jathagam" class="jathagam-img">
                         </mat-card-content>
                     </mat-card>
                 </div>
 
-                <!-- Right Side: Details Blocks -->
+                <!-- Right Column -->
                 <div class="right-column">
                     <mat-card class="info-details-card">
                         <mat-card-header>
                             <mat-card-title>Profile Details</mat-card-title>
                         </mat-card-header>
                         <mat-card-content>
-                            <!-- Personal Info Section -->
+
+                            <!-- Personal Info -->
                             <div class="section-block">
                                 <h3 class="section-title"><mat-icon>person</mat-icon> Personal Information</h3>
                                 <div class="info-grid">
                                     <div class="info-item">
                                         <span class="label">Name</span>
-                                        <span class="value">{{profile.name}}</span>
+                                        <span class="value">{{ profile.name }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Age</span>
-                                        <span class="value">{{profile.age}} Years</span>
+                                        <span class="value">{{ getAge(profile.dob) }} Years</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Date of Birth</span>
+                                        <span class="value">{{ profile.dob | date: 'dd MMM yyyy' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Gender</span>
+                                        <span class="value">{{ profile.gender }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Marital Status</span>
-                                        <span class="value">{{profile.maritalStatus}}</span>
+                                        <span class="value">{{ profile.martialStatus }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Religion</span>
+                                        <span class="value">{{ profile.religion }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Native Place</span>
-                                        <span class="value">{{profile.native}}</span>
+                                        <span class="value">{{ profile.nativePlace }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">District</span>
+                                        <span class="value">{{ profile.district?.districtName }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Horoscope / Astrological Info Section -->
-                            <div class="section-block">
+                            <!-- Physical Attributes -->
+                            <div class="section-block" *ngIf="profile.personalDetails?.[0] as personal">
+                                <h3 class="section-title"><mat-icon>accessibility_new</mat-icon> Physical Attributes
+                                </h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="label">Height</span>
+                                        <span class="value">{{ personal.height?.heightName || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Weight</span>
+                                        <span class="value">{{ personal.weight?.weightName || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Skin Tone</span>
+                                        <span class="value">{{ personal.skinTone || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Food Preference</span>
+                                        <span class="value">{{ personal.foodOption === 'VEG' ? 'Vegetarian' :
+                                            (personal.foodOption === 'NONVEG' ? 'Non-Vegetarian' : personal.foodOption)
+                                            }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Assets</span>
+                                        <span class="value">{{ personal.asset || '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="info-item full-row" *ngIf="personal.Interest">
+                                    <span class="label">Interests / Expectations</span>
+                                    <span class="value">{{ personal.Interest }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Astrological Info -->
+                            <div class="section-block" *ngIf="profile.zodiacDetails?.[0] as zodiac">
                                 <h3 class="section-title"><mat-icon>wb_sunny</mat-icon> Astrological Details</h3>
                                 <div class="info-grid">
                                     <div class="info-item">
                                         <span class="label">Raasi (Zodiac)</span>
-                                        <span class="value">{{profile.zodiac}}</span>
+                                        <span class="value">{{ zodiac.zodiac?.zodiacTamil || '-' }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Star (Nakshatram)</span>
-                                        <span class="value">{{profile.star}}</span>
+                                        <span class="value">{{ zodiac.star?.starTamil || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Patham</span>
+                                        <span class="value">{{ zodiac.patham || '-' }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Dosham</span>
-                                        <span class="value">{{profile.dosham}}</span>
+                                        <span class="value">{{ zodiac.dosham || '-' }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Professional Info Section -->
-                            <div class="section-block font-block">
+                            <!-- Professional Info -->
+                            <div class="section-block font-block" *ngIf="profile.careerDetails?.[0] as career">
                                 <h3 class="section-title"><mat-icon>work</mat-icon> Professional Details</h3>
                                 <div class="info-grid">
                                     <div class="info-item">
                                         <span class="label">Education</span>
-                                        <span class="value">{{profile.education}}</span>
+                                        <span class="value">{{ career.educationDetails?.join(', ') || '-' }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Profession</span>
-                                        <span class="value">{{profile.profession}}</span>
+                                        <span class="value">{{ career.profession || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Company</span>
+                                        <span class="value">{{ career.companyName || '-' }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Work Location</span>
-                                        <span class="value">{{profile.location}}</span>
+                                        <span class="value">{{ career.workLocation || '-' }}</span>
                                     </div>
                                     <div class="info-item">
                                         <span class="label">Monthly Salary</span>
-                                        <span class="value">{{profile.salary}}</span>
+                                        <span class="value">{{ career.monthyIncome ? ('₹' + (career.monthyIncome |
+                                            number)) : '-' }}</span>
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Family Details -->
+                            <div class="section-block" *ngIf="profile.parentDetails?.[0] as parent">
+                                <h3 class="section-title"><mat-icon>family_restroom</mat-icon> Family Details</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="label">Father's Name</span>
+                                        <span class="value">{{ parent.fatherName || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Father's Mobile</span>
+                                        <span class="value">{{ parent.fatherMobileNumber ? '+91 ' +
+                                            parent.fatherMobileNumber : '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Mother's Name</span>
+                                        <span class="value">{{ parent.motherName || '-' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="label">Mother's Mobile</span>
+                                        <span class="value">{{ parent.motherMobileNumber ? '+91 ' +
+                                            parent.motherMobileNumber : '-' }}</span>
+                                    </div>
+                                    <div class="info-item" *ngIf="parent.siblingMale">
+                                        <span class="label">Brothers</span>
+                                        <span class="value">{{ parent.siblingMale }}</span>
+                                    </div>
+                                    <div class="info-item" *ngIf="parent.siblingFemale">
+                                        <span class="label">Sisters</span>
+                                        <span class="value">{{ parent.siblingFemale }}</span>
+                                    </div>
+                                    <div class="info-item" *ngIf="parent.marriedMale">
+                                        <span class="label">Married Brothers</span>
+                                        <span class="value">{{ parent.marriedMale }}</span>
+                                    </div>
+                                    <div class="info-item" *ngIf="parent.marriedFemale">
+                                        <span class="label">Married Sisters</span>
+                                        <span class="value">{{ parent.marriedFemale }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                         </mat-card-content>
                     </mat-card>
                 </div>

@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, AfterViewInit, inject } from '@angular/core';
+import { Component, ViewChild, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -9,28 +9,38 @@ import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/p
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatProgressBarModule } from '@angular/material/progress-bar'; // For completion %
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { SignupService } from '../signup.service';
+import { ProfileStateService } from '../profile-state.service';
 import { environment } from '../../environments/environment';
 
 interface Profile {
-    id: string;      // Matrimony ID
-    dbId?: number;   // Numeric Database ID
+    id: string;
+    dbId?: number;
     name: string;
     age: number;
+    gender: string;
     image: string;
     zodiac: string;
     star: string;
+    patham: string;
+    dosham: string;
     native: string;
+    religion: string;
     education: string;
     profession: string;
+    companyName: string;
     location: string;
     salary: string;
     maritalStatus: string;
-    dosham: string;
-    interestSent?: boolean; // Track local state for UI
+    height: string;
+    weight: string;
+    foodOption: string;
+    skinTone: string;
+    asset: string;
+    interestSent?: boolean;
 }
 
 @Component({
@@ -52,20 +62,20 @@ interface Profile {
     templateUrl: './profile-list.component.html',
     styleUrl: './profile-list.component.scss'
 })
-export class ProfileListComponent implements OnInit, AfterViewInit {
+export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
     private _fb = inject(FormBuilder);
     private router = inject(Router);
     private authService = inject(AuthService);
     private signupService = inject(SignupService);
+    private profileState = inject(ProfileStateService);
 
     get isLoggedIn() {
         return this.authService.isLoggedIn();
     }
 
     userProfileCompletion = 0;
-    sentInterestsCache: any[] = []; // In-memory cache of sent interests to fetch contact numbers
+    sentInterestsCache: any[] = [];
 
-    // Pagination
     totalProfiles = 0;
     pageSize = 10;
     pageIndex = 0;
@@ -74,7 +84,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-    // Filters
     filterForm = this._fb.group({
         searchQuery: [''],
         ageFrom: [''],
@@ -82,13 +91,30 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         location: ['']
     });
 
+    private skipNextFilterUpdate = false;
+
     ngOnInit() {
+        // Restore filters/page from cache before wiring up subscriptions
+        if (this.profileState.filterValue) {
+            this.skipNextFilterUpdate = true;
+            this.filterForm.patchValue(this.profileState.filterValue, { emitEvent: false });
+        }
+        this.pageIndex = this.profileState.pageIndex;
+        this.pageSize = this.profileState.pageSize;
+
         if (this.isLoggedIn) {
             this.loadProfilePercentage();
+        }
+
+        // ---- KEY FIX: use cache if we already loaded this session ----
+        if (this.profileState.hasCache(this.isLoggedIn)) {
+            this.allProfiles = this.profileState.allProfiles as Profile[];
+            this.updateVisibleProfiles();
+            this.restoreScroll();
+        } else if (this.isLoggedIn) {
             this.loadBackendData();
         } else {
-            this.generateMockProfiles();
-            this.updateVisibleProfiles();
+            this.loadProfileList();
         }
 
         this.filterForm.valueChanges.subscribe(() => {
@@ -98,7 +124,25 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         });
     }
 
-    ngAfterViewInit() { }
+    ngAfterViewInit() {
+        if (this.paginator) {
+            this.paginator.pageIndex = this.pageIndex;
+        }
+    }
+
+    ngOnDestroy() {
+        // Persist current filters/page so returning from profile-details doesn't reset the view
+        this.profileState.filterValue = this.filterForm.value;
+        this.profileState.pageIndex = this.pageIndex;
+        this.profileState.pageSize = this.pageSize;
+        this.profileState.scrollY = window.scrollY;
+    }
+
+    private restoreScroll() {
+        if (this.profileState.scrollY) {
+            setTimeout(() => window.scrollTo({ top: this.profileState.scrollY }), 0);
+        }
+    }
 
     loadProfilePercentage() {
         const userId = this.authService.currentUser()?.id;
@@ -118,7 +162,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         const userId = this.authService.currentUser()?.id;
         if (!userId) return;
 
-        // Fetch sent interests first so we know which profiles we liked & to cache details
         this.signupService.getSentInterests(userId).subscribe({
             next: (res: any) => {
                 this.sentInterestsCache = res.result || [];
@@ -133,7 +176,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     }
 
     loadMatchedProfiles(sentIds: number[]) {
-        // Fetch up to 100 profiles to filter and paginate locally
         this.signupService.getMatchingList(100, 0).subscribe({
             next: (res: any) => {
                 const raw = res.result || [];
@@ -142,21 +184,32 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
                     mapped.interestSent = sentIds.includes(p.id);
                     return mapped;
                 });
+                this.profileState.setCache(this.allProfiles, this.isLoggedIn);
                 this.updateVisibleProfiles();
             },
-            error: (err) => {
-                console.error('Error fetching matching profiles', err);
-            }
+            error: (err) => console.error('Error fetching matching profiles', err)
+        });
+    }
+
+    loadProfileList() {
+        this.signupService.getProfileList(100, 0).subscribe({
+            next: (res: any) => {
+                const raw = res.result || [];
+                this.allProfiles = raw.map((p: any) => this.mapBackendProfile(p));
+                this.profileState.setCache(this.allProfiles, this.isLoggedIn);
+                this.updateVisibleProfiles();
+            },
+            error: (err) => console.error('Error fetching matching profiles', err)
         });
     }
 
     mapBackendProfile(p: any): Profile {
         const career = p.careerDetails?.[0] || {};
         const zodiacDetail = p.zodiacDetails?.[0] || {};
+        const personal = p.personalDetails?.[0] || {};
 
         const age = this.calculateAge(p.dob);
         const img = p.profileImages?.[0]?.profileUrl ||
-            p.profileimages?.[0]?.profileUrl ||
             (p.matrimonyId ? `https://vc-matrimony.s3.us-east-1.amazonaws.com/profile/profileimage/${p.matrimonyId}.jpg` : 'https://dummyimage.com/300x300/cccccc/757575.png');
 
         const education = Array.isArray(career.educationDetails)
@@ -168,16 +221,25 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
             dbId: p.id,
             name: p.name,
             age: age,
+            gender: p.gender || '-',
             image: img,
             zodiac: zodiacDetail.zodiac?.zodiacTamil || '-',
             star: zodiacDetail.star?.starTamil || '-',
+            patham: zodiacDetail.patham || '-',
+            dosham: zodiacDetail.dosham || '-',
             native: p.nativePlace || '-',
+            religion: p.religion || '-',
             education: education,
             profession: career.profession || '-',
+            companyName: career.companyName || '-',
             location: career.workLocation || p.nativePlace || '-',
-            salary: career.monthyIncome ? career.monthyIncome.toLocaleString('en-IN') : '-',
+            salary: career.monthyIncome ? `₹${Number(career.monthyIncome).toLocaleString('en-IN')}` : '-',
             maritalStatus: p.martialStatus || '-',
-            dosham: zodiacDetail.dosham || 'Suddha Jathagam',
+            height: personal.height?.heightName || '-',
+            weight: personal.weight?.weightName || '-',
+            foodOption: personal.foodOption === 'VEG' ? 'Vegetarian' : (personal.foodOption === 'NONVEG' ? 'Non-Veg' : '-'),
+            skinTone: personal.skinTone || '-',
+            asset: personal.asset || '-',
             interestSent: false
         };
     }
@@ -188,46 +250,8 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
         return age;
-    }
-
-    generateMockProfiles() {
-        const baseProfiles: Profile[] = [
-            {
-                id: 'MM24618', name: 'Keerthika', age: 24, image: 'https://dummyimage.com/300x300/e91e63/ffffff&text=Keerthika',
-                zodiac: 'Rishabam', star: 'Mrigasheersham', native: 'Trichy',
-                education: 'BE CSE', profession: 'Software Engineer', location: 'Coimbatore', salary: '45,000',
-                maritalStatus: 'Unmarried', dosham: 'Suddha Jathagam'
-            },
-            {
-                id: 'MM24617', name: 'S Sangaranarayanan', age: 40, image: 'https://dummyimage.com/300x300/3f51b5/ffffff&text=Sangaranarayanan',
-                zodiac: 'Viruchiga', star: 'Kettai', native: 'Srivilliputhur',
-                education: 'Diploma', profession: 'Own Business', location: 'Sivakasi', salary: '30,000',
-                maritalStatus: 'Divorced', dosham: 'Suddha Jathagam'
-            },
-            {
-                id: 'MM24616', name: 'Rajesh Kumar', age: 29, image: 'https://dummyimage.com/300x300/4caf50/ffffff&text=Rajesh',
-                zodiac: 'Kumbam', star: 'Sathayam', native: 'Madurai',
-                education: 'MBA', profession: 'Bank Manager', location: 'Chennai', salary: '60,000',
-                maritalStatus: 'Unmarried', dosham: 'Rahu Ketu'
-            }
-        ];
-
-        this.allProfiles = [];
-        for (let i = 0; i < 35; i++) {
-            const base = baseProfiles[i % 3];
-            this.allProfiles.push({
-                ...base,
-                id: `MM${24620 + i}`,
-                name: `${base.name} ${i + 1}`,
-                age: base.age + (i % 7),
-                location: (i % 2 === 0) ? base.location : 'Chennai'
-            });
-        }
-        this.totalProfiles = this.allProfiles.length;
     }
 
     handlePageEvent(e: PageEvent) {
@@ -237,11 +261,13 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     }
 
     updateVisibleProfiles() {
+        if (this.skipNextFilterUpdate) {
+            this.skipNextFilterUpdate = false;
+        }
         const { searchQuery, ageFrom, ageTo, location } = this.filterForm.value;
 
         let filtered = this.allProfiles.filter(p => {
             let matches = true;
-
             if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
                 !p.id.toLowerCase().includes(searchQuery.toLowerCase())) {
                 matches = false;
@@ -251,7 +277,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
             }
             if (ageFrom && p.age < Number(ageFrom)) matches = false;
             if (ageTo && p.age > Number(ageTo)) matches = false;
-
             return matches;
         });
 
@@ -259,38 +284,22 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         const startIndex = this.pageIndex * this.pageSize;
         const endIndex = startIndex + this.pageSize;
         this.visibleProfiles = filtered.slice(startIndex, endIndex);
-
-        if (window.innerWidth < 600) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
     }
 
     toggleLogin() {
         if (this.isLoggedIn) {
             this.authService.logout();
-            // Re-generate mock data on logout
+            this.profileState.clear();
             this.allProfiles = [];
-            this.generateMockProfiles();
-            this.updateVisibleProfiles();
+            this.loadProfileList();
         } else {
             this.router.navigate(['/login']);
         }
     }
 
-    // --- ACTIONS ---
-
     viewContact(profile: Profile) {
         if (this.isLoggedIn) {
-            const sentMatch = this.sentInterestsCache.find(x => x.likedProfileId === profile.dbId);
-            const mobileNumber = sentMatch?.Receiver?.mobileNumber || null;
-            this.router.navigate(['/profile-details'], {
-                state: {
-                    profile: {
-                        ...profile,
-                        mobileNumber: mobileNumber
-                    }
-                }
-            });
+            this.router.navigate(['/profile-details', profile.dbId]);
         } else {
             this.navigateToRegister();
         }
@@ -300,8 +309,7 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         if (this.isLoggedIn) {
             const userId = this.authService.currentUser()?.id;
             if (!userId) return;
-            const url = `${environment.apiUrl}/profile/${userId}/download`;
-            window.open(url, '_blank');
+            window.open(`${environment.apiUrl}/profile/${userId}/download`, '_blank');
         }
     }
 
@@ -309,14 +317,12 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
         if (this.isLoggedIn) {
             const matId = this.authService.currentUser()?.matrimonyId || 'MY';
             const text = `Check out my profile on Vaniya Chettiyar Kalyana Malai! ID: ${matId}`;
-            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
     }
 
     editMyProfile() {
         if (this.isLoggedIn) {
-            // We can navigate to sign up or registration form to complete profile details
             this.router.navigate(['/register']);
         }
     }
@@ -330,7 +336,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
                 next: (res) => {
                     profile.interestSent = true;
                     alert(res.message || `Interest sent to ${profile.name}!`);
-                    // Refresh sent list cache to access the number
                     this.signupService.getSentInterests(loggedInUserId).subscribe((r: any) => {
                         this.sentInterestsCache = r.result || [];
                     });
@@ -348,7 +353,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     viewSentInterests() {
         const userId = this.authService.currentUser()?.id;
         if (!userId) return;
-
         this.signupService.getSentInterests(userId).subscribe({
             next: (res: any) => {
                 const raw = res.result || [];
@@ -369,7 +373,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
     viewReceivedInterests() {
         const userId = this.authService.currentUser()?.id;
         if (!userId) return;
-
         this.signupService.getReceivedInterests(userId).subscribe({
             next: (res: any) => {
                 const raw = res.result || [];
@@ -389,5 +392,9 @@ export class ProfileListComponent implements OnInit, AfterViewInit {
 
     navigateToRegister() {
         this.router.navigate(['/signup']);
+    }
+
+    callAdvertiser() {
+        window.location.href = 'tel:8903960263';
     }
 }
