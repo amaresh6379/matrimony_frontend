@@ -135,5 +135,23 @@ export class SignupService {
     getProfileDetails(id: number) {
         return this.http.get<any>(`${this.baseUrl}/profile/${id}`);
     }
+    updateProfileDetails(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}`, data);
+    }
+    updateProfileImage(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}/profileImage`, data);
+    }
+    updateProfileCareer(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}/career`, data);
+    }
+    updateProfileFamily(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}/family`, data);
+    }
+    updateProfileZodiac(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}/zodiac`, data);
+    }
+    updateProfilePersonal(id: number, data: any) {
+        return this.http.put<any>(`${this.baseUrl}/profile/${id}/personal`, data);
+    }
 }
 

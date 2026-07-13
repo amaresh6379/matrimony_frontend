@@ -1,6 +1,5 @@
 <div class="community-page">
 
-    <!-- Simple Header -->
     <header class="app-header">
         <div class="header-inner">
             <div class="logo-area">
@@ -16,8 +15,6 @@
                 </ng-container>
 
                 <ng-container *ngIf="isLoggedIn">
-                    <a (click)="editMyProfile()">Edit Profile</a>
-                    <span class="divider">|</span>
                     <a (click)="toggleLogin()">Logout</a>
                 </ng-container>
             </div>
@@ -25,11 +22,13 @@
     </header>
 
     <div class="main-content">
-        <!-- Back Navigation Button -->
         <div class="back-bar">
             <button mat-stroked-button (click)="goBack()" color="primary" class="back-btn">
                 <mat-icon>arrow_back</mat-icon> Back to Profile List
             </button>
+            <span class="own-profile-badge" *ngIf="isOwnProfile">
+                <mat-icon inline>person</mat-icon> Viewing Your Profile
+            </span>
         </div>
 
         <div class="details-container" *ngIf="profile">
@@ -39,9 +38,24 @@
                 <div class="left-column">
                     <mat-card class="image-card">
                         <div class="profile-img-val">
-                            <img [src]="profile.profileImages?.[0]?.profileUrl || 'assets/images/no-profile.png'"
+                            <img [src]="imagePreviewUrl || profile.profileImages?.[0]?.profileUrl || 'assets/images/no-profile.png'"
                                 [alt]="profile.name">
+
+                            <button mat-mini-fab color="primary" class="image-edit-fab"
+                                *ngIf="isOwnProfile && !selectedImageFile" (click)="fileInput.click()">
+                                <mat-icon>photo_camera</mat-icon>
+                            </button>
+                            <input #fileInput type="file" accept="image/*" hidden (change)="onImageSelected($event)">
                         </div>
+
+                        <div class="image-edit-actions" *ngIf="selectedImageFile">
+                            <button mat-flat-button color="primary" [disabled]="uploadingImage" (click)="uploadImage()">
+                                {{ uploadingImage ? 'Uploading...' : 'Save Photo' }}
+                            </button>
+                            <button mat-stroked-button [disabled]="uploadingImage"
+                                (click)="cancelImageEdit()">Cancel</button>
+                        </div>
+
                         <mat-card-content class="image-card-content">
                             <h2>{{ profile.name }}</h2>
                             <p class="matrimony-id">ID: {{ profile.matrimonyId }}</p>
@@ -49,12 +63,9 @@
                         </mat-card-content>
                     </mat-card>
 
-                    <!-- Contact Details Card -->
                     <mat-card class="contact-card">
                         <mat-card-header>
-                            <mat-card-title>
-                                <mat-icon>phone</mat-icon> Contact Information
-                            </mat-card-title>
+                            <mat-card-title><mat-icon>phone</mat-icon> Contact Information</mat-card-title>
                         </mat-card-header>
                         <mat-card-content class="contact-card-content">
                             <div class="contact-info">
@@ -62,7 +73,6 @@
                                 <p class="phone-value">{{ profile.mobileNumber ? '+91 ' + profile.mobileNumber : '-' }}
                                 </p>
                             </div>
-
                             <ng-container *ngIf="profile.parentDetails?.[0] as parent">
                                 <div class="contact-info" *ngIf="parent.contactPersonNumber">
                                     <p class="phone-label">{{ parent.contactPersonType || 'Contact Person' }} ({{
@@ -73,12 +83,9 @@
                         </mat-card-content>
                     </mat-card>
 
-                    <!-- Horoscope Image Card -->
                     <mat-card class="contact-card" *ngIf="profile.zodiacDetails?.[0]?.jathgamImage">
                         <mat-card-header>
-                            <mat-card-title>
-                                <mat-icon>image</mat-icon> Horoscope (Jathagam)
-                            </mat-card-title>
+                            <mat-card-title><mat-icon>image</mat-icon> Horoscope (Jathagam)</mat-card-title>
                         </mat-card-header>
                         <mat-card-content class="contact-card-content">
                             <img [src]="profile.zodiacDetails[0].jathgamImage" alt="Jathagam" class="jathagam-img">
@@ -89,178 +96,298 @@
                 <!-- Right Column -->
                 <div class="right-column">
                     <mat-card class="info-details-card">
-                        <mat-card-header>
-                            <mat-card-title>Profile Details</mat-card-title>
-                        </mat-card-header>
+                        <mat-card-header><mat-card-title>Profile Details</mat-card-title></mat-card-header>
                         <mat-card-content>
 
-                            <!-- Personal Info -->
+                            <!-- Basic Info -->
                             <div class="section-block">
-                                <h3 class="section-title"><mat-icon>person</mat-icon> Personal Information</h3>
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <span class="label">Name</span>
-                                        <span class="value">{{ profile.name }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Age</span>
-                                        <span class="value">{{ getAge(profile.dob) }} Years</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Date of Birth</span>
-                                        <span class="value">{{ profile.dob | date: 'dd MMM yyyy' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Gender</span>
-                                        <span class="value">{{ profile.gender }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Marital Status</span>
-                                        <span class="value">{{ profile.martialStatus }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Religion</span>
-                                        <span class="value">{{ profile.religion }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Native Place</span>
-                                        <span class="value">{{ profile.nativePlace }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">District</span>
-                                        <span class="value">{{ profile.district?.districtName }}</span>
-                                    </div>
+                                <h3 class="section-title">
+                                    <mat-icon>person</mat-icon> Personal Information
+                                    <button mat-icon-button class="edit-pencil"
+                                        *ngIf="isOwnProfile && editingSection !== 'basic'" (click)="startEdit('basic')">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                </h3>
+
+                                <div class="info-grid" *ngIf="editingSection !== 'basic'">
+                                    <div class="info-item"><span class="label">Name</span><span class="value">{{
+                                            profile.name }}</span></div>
+                                    <div class="info-item"><span class="label">Age</span><span class="value">{{
+                                            getAge(profile.dob) }} Years</span></div>
+                                    <div class="info-item"><span class="label">Date of Birth</span><span
+                                            class="value">{{ profile.dob | date: 'dd MMM yyyy' }}</span></div>
+                                    <div class="info-item"><span class="label">Gender</span><span class="value">{{
+                                            profile.gender }}</span></div>
+                                    <div class="info-item"><span class="label">Marital Status</span><span
+                                            class="value">{{ profile.martialStatus }}</span></div>
+                                    <div class="info-item"><span class="label">Religion</span><span class="value">{{
+                                            profile.religion }}</span></div>
+                                    <div class="info-item"><span class="label">Native Place</span><span class="value">{{
+                                            profile.nativePlace }}</span></div>
+                                    <div class="info-item"><span class="label">District</span><span class="value">{{
+                                            profile.district?.districtName }}</span></div>
                                 </div>
+
+                                <form [formGroup]="basicForm" class="info-grid edit-grid"
+                                    *ngIf="editingSection === 'basic'">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Name</mat-label>
+                                        <input matInput formControlName="name">
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Gender</mat-label>
+                                        <mat-select formControlName="gender">
+                                            <mat-option value="Male">Male</mat-option>
+                                            <mat-option value="Female">Female</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Religion</mat-label>
+                                        <input matInput formControlName="religion">
+                                    </mat-form-field>
+                                    <div class="info-item readonly-note">
+                                        <span class="label">Date of Birth</span>
+                                        <span class="value">{{ profile.dob | date: 'dd MMM yyyy' }} (locked)</span>
+                                    </div>
+                                    <div class="edit-actions full-row">
+                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                            (click)="saveSection('basic')">Save</button>
+                                        <button mat-stroked-button [disabled]="saving"
+                                            (click)="cancelEdit()">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
 
                             <!-- Physical Attributes -->
                             <div class="section-block" *ngIf="profile.personalDetails?.[0] as personal">
-                                <h3 class="section-title"><mat-icon>accessibility_new</mat-icon> Physical Attributes
+                                <h3 class="section-title">
+                                    <mat-icon>accessibility_new</mat-icon> Physical Attributes
+                                    <button mat-icon-button class="edit-pencil"
+                                        *ngIf="isOwnProfile && editingSection !== 'personal'"
+                                        (click)="startEdit('personal')">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
                                 </h3>
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <span class="label">Height</span>
-                                        <span class="value">{{ personal.height?.heightName || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Weight</span>
-                                        <span class="value">{{ personal.weight?.weightName || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Skin Tone</span>
-                                        <span class="value">{{ personal.skinTone || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Food Preference</span>
+
+                                <div class="info-grid" *ngIf="editingSection !== 'personal'">
+                                    <div class="info-item"><span class="label">Height</span><span class="value">{{
+                                            personal.height?.heightName || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Weight</span><span class="value">{{
+                                            personal.weight?.weightName || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Skin Tone</span><span class="value">{{
+                                            personal.skinTone || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Food Preference</span>
                                         <span class="value">{{ personal.foodOption === 'VEG' ? 'Vegetarian' :
                                             (personal.foodOption === 'NONVEG' ? 'Non-Vegetarian' : personal.foodOption)
                                             }}</span>
                                     </div>
-                                    <div class="info-item">
-                                        <span class="label">Assets</span>
-                                        <span class="value">{{ personal.asset || '-' }}</span>
+                                    <div class="info-item"><span class="label">Assets</span><span class="value">{{
+                                            personal.asset || '-' }}</span></div>
+                                    <div class="info-item full-row" *ngIf="personal.Interest">
+                                        <span class="label">Interests / Expectations</span><span class="value">{{
+                                            personal.Interest }}</span>
                                     </div>
                                 </div>
-                                <div class="info-item full-row" *ngIf="personal.Interest">
-                                    <span class="label">Interests / Expectations</span>
-                                    <span class="value">{{ personal.Interest }}</span>
-                                </div>
+
+                                <form [formGroup]="personalForm" class="info-grid edit-grid"
+                                    *ngIf="editingSection === 'personal'">
+                                    <mat-form-field appearance="outline"><mat-label>Height</mat-label><input matInput
+                                            formControlName="height"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Weight</mat-label><input matInput
+                                            formControlName="weight"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Skin Tone</mat-label><input matInput
+                                            formControlName="skinTone"></mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Food Preference</mat-label>
+                                        <mat-select formControlName="foodOption">
+                                            <mat-option value="VEG">Vegetarian</mat-option>
+                                            <mat-option value="NONVEG">Non-Vegetarian</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Assets</mat-label><input matInput
+                                            formControlName="asset"></mat-form-field>
+                                    <mat-form-field appearance="outline" class="full-row">
+                                        <mat-label>Interests / Expectations</mat-label>
+                                        <textarea matInput formControlName="Interest" rows="2"></textarea>
+                                    </mat-form-field>
+                                    <div class="edit-actions full-row">
+                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                            (click)="saveSection('personal')">Save</button>
+                                        <button mat-stroked-button [disabled]="saving"
+                                            (click)="cancelEdit()">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
 
                             <!-- Astrological Info -->
                             <div class="section-block" *ngIf="profile.zodiacDetails?.[0] as zodiac">
-                                <h3 class="section-title"><mat-icon>wb_sunny</mat-icon> Astrological Details</h3>
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <span class="label">Raasi (Zodiac)</span>
-                                        <span class="value">{{ zodiac.zodiac?.zodiacTamil || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Star (Nakshatram)</span>
-                                        <span class="value">{{ zodiac.star?.starTamil || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Patham</span>
-                                        <span class="value">{{ zodiac.patham || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Dosham</span>
-                                        <span class="value">{{ zodiac.dosham || '-' }}</span>
-                                    </div>
+                                <h3 class="section-title">
+                                    <mat-icon>wb_sunny</mat-icon> Astrological Details
+                                    <button mat-icon-button class="edit-pencil"
+                                        *ngIf="isOwnProfile && editingSection !== 'zodiac'"
+                                        (click)="startEdit('zodiac')">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                </h3>
+
+                                <div class="info-grid" *ngIf="editingSection !== 'zodiac'">
+                                    <div class="info-item"><span class="label">Raasi (Zodiac)</span><span
+                                            class="value">{{ zodiac.zodiac?.zodiacTamil || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Star (Nakshatram)</span><span
+                                            class="value">{{ zodiac.star?.starTamil || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Patham</span><span class="value">{{
+                                            zodiac.patham || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Dosham</span><span class="value">{{
+                                            zodiac.dosham || '-' }}</span></div>
                                 </div>
+
+                                <form [formGroup]="zodiacForm" class="info-grid edit-grid"
+                                    *ngIf="editingSection === 'zodiac'">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Raasi (Zodiac)</mat-label>
+                                        <mat-select formControlName="zodiacId">
+                                            <mat-option *ngFor="let z of zodiacList" [value]="z.id">{{ z.zodiacTamil
+                                                }}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Star (Nakshatram)</mat-label>
+                                        <mat-select formControlName="starId">
+                                            <mat-option *ngFor="let s of starList" [value]="s.id">{{ s.starTamil
+                                                }}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Patham</mat-label><input matInput
+                                            formControlName="patham"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Dosham</mat-label><input matInput
+                                            formControlName="dosham"></mat-form-field>
+                                    <div class="edit-actions full-row">
+                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                            (click)="saveSection('zodiac')">Save</button>
+                                        <button mat-stroked-button [disabled]="saving"
+                                            (click)="cancelEdit()">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
 
                             <!-- Professional Info -->
-                            <div class="section-block font-block" *ngIf="profile.careerDetails?.[0] as career">
-                                <h3 class="section-title"><mat-icon>work</mat-icon> Professional Details</h3>
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <span class="label">Education</span>
-                                        <span class="value">{{ career.educationDetails?.join(', ') || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Profession</span>
-                                        <span class="value">{{ career.profession || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Company</span>
-                                        <span class="value">{{ career.companyName || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Work Location</span>
-                                        <span class="value">{{ career.workLocation || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Monthly Salary</span>
-                                        <span class="value">{{ career.monthyIncome ? ('₹' + (career.monthyIncome |
-                                            number)) : '-' }}</span>
-                                    </div>
+                            <div class="section-block" *ngIf="profile.careerDetails?.[0] as career">
+                                <h3 class="section-title">
+                                    <mat-icon>work</mat-icon> Professional Details
+                                    <button mat-icon-button class="edit-pencil"
+                                        *ngIf="isOwnProfile && editingSection !== 'career'"
+                                        (click)="startEdit('career')">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                </h3>
+
+                                <div class="info-grid" *ngIf="editingSection !== 'career'">
+                                    <div class="info-item"><span class="label">Education</span><span class="value">{{
+                                            career.educationDetails?.join(', ') || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Profession</span><span class="value">{{
+                                            career.profession || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Company</span><span class="value">{{
+                                            career.companyName || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Work Location</span><span
+                                            class="value">{{ career.workLocation || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Monthly Salary</span><span
+                                            class="value">{{ career.monthyIncome ? ('₹' + (career.monthyIncome |
+                                            number)) : '-' }}</span></div>
                                 </div>
+
+                                <form [formGroup]="careerForm" class="info-grid edit-grid"
+                                    *ngIf="editingSection === 'career'">
+                                    <mat-form-field appearance="outline" class="full-row">
+                                        <mat-label>Education (comma-separated)</mat-label>
+                                        <input matInput formControlName="educationDetails">
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Profession</mat-label><input
+                                            matInput formControlName="profession"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Company</mat-label><input matInput
+                                            formControlName="companyName"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Work Location</mat-label><input
+                                            matInput formControlName="workLocation"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Monthly Salary</mat-label><input
+                                            matInput type="number" formControlName="monthyIncome"></mat-form-field>
+                                    <div class="edit-actions full-row">
+                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                            (click)="saveSection('career')">Save</button>
+                                        <button mat-stroked-button [disabled]="saving"
+                                            (click)="cancelEdit()">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
 
                             <!-- Family Details -->
                             <div class="section-block" *ngIf="profile.parentDetails?.[0] as parent">
-                                <h3 class="section-title"><mat-icon>family_restroom</mat-icon> Family Details</h3>
-                                <div class="info-grid">
-                                    <div class="info-item">
-                                        <span class="label">Father's Name</span>
-                                        <span class="value">{{ parent.fatherName || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Father's Mobile</span>
-                                        <span class="value">{{ parent.fatherMobileNumber ? '+91 ' +
-                                            parent.fatherMobileNumber : '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Mother's Name</span>
-                                        <span class="value">{{ parent.motherName || '-' }}</span>
-                                    </div>
-                                    <div class="info-item">
-                                        <span class="label">Mother's Mobile</span>
-                                        <span class="value">{{ parent.motherMobileNumber ? '+91 ' +
-                                            parent.motherMobileNumber : '-' }}</span>
-                                    </div>
-                                    <div class="info-item" *ngIf="parent.siblingMale">
-                                        <span class="label">Brothers</span>
-                                        <span class="value">{{ parent.siblingMale }}</span>
-                                    </div>
-                                    <div class="info-item" *ngIf="parent.siblingFemale">
-                                        <span class="label">Sisters</span>
-                                        <span class="value">{{ parent.siblingFemale }}</span>
-                                    </div>
-                                    <div class="info-item" *ngIf="parent.marriedMale">
-                                        <span class="label">Married Brothers</span>
-                                        <span class="value">{{ parent.marriedMale }}</span>
-                                    </div>
-                                    <div class="info-item" *ngIf="parent.marriedFemale">
-                                        <span class="label">Married Sisters</span>
-                                        <span class="value">{{ parent.marriedFemale }}</span>
-                                    </div>
+                                <h3 class="section-title">
+                                    <mat-icon>family_restroom</mat-icon> Family Details
+                                    <button mat-icon-button class="edit-pencil"
+                                        *ngIf="isOwnProfile && editingSection !== 'family'"
+                                        (click)="startEdit('family')">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                </h3>
+
+                                <div class="info-grid" *ngIf="editingSection !== 'family'">
+                                    <div class="info-item"><span class="label">Father's Name</span><span
+                                            class="value">{{ parent.fatherName || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Father's Mobile</span><span
+                                            class="value">{{ parent.fatherMobileNumber ? '+91 ' +
+                                            parent.fatherMobileNumber : '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Mother's Name</span><span
+                                            class="value">{{ parent.motherName || '-' }}</span></div>
+                                    <div class="info-item"><span class="label">Mother's Mobile</span><span
+                                            class="value">{{ parent.motherMobileNumber ? '+91 ' +
+                                            parent.motherMobileNumber : '-' }}</span></div>
+                                    <div class="info-item" *ngIf="parent.siblingMale"><span
+                                            class="label">Brothers</span><span class="value">{{ parent.siblingMale
+                                            }}</span></div>
+                                    <div class="info-item" *ngIf="parent.siblingFemale"><span
+                                            class="label">Sisters</span><span class="value">{{ parent.siblingFemale
+                                            }}</span></div>
+                                    <div class="info-item" *ngIf="parent.marriedMale"><span class="label">Married
+                                            Brothers</span><span class="value">{{ parent.marriedMale }}</span></div>
+                                    <div class="info-item" *ngIf="parent.marriedFemale"><span class="label">Married
+                                            Sisters</span><span class="value">{{ parent.marriedFemale }}</span></div>
                                 </div>
+
+                                <form [formGroup]="familyForm" class="info-grid edit-grid"
+                                    *ngIf="editingSection === 'family'">
+                                    <mat-form-field appearance="outline"><mat-label>Father's Name</mat-label><input
+                                            matInput formControlName="fatherName"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Father's Mobile</mat-label><input
+                                            matInput formControlName="fatherMobileNumber"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Mother's Name</mat-label><input
+                                            matInput formControlName="motherName"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Mother's Mobile</mat-label><input
+                                            matInput formControlName="motherMobileNumber"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Brothers</mat-label><input matInput
+                                            type="number" formControlName="siblingMale"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Sisters</mat-label><input matInput
+                                            type="number" formControlName="siblingFemale"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Married Brothers</mat-label><input
+                                            matInput type="number" formControlName="marriedMale"></mat-form-field>
+                                    <mat-form-field appearance="outline"><mat-label>Married Sisters</mat-label><input
+                                            matInput type="number" formControlName="marriedFemale"></mat-form-field>
+                                    <div class="edit-actions full-row">
+                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                            (click)="saveSection('family')">Save</button>
+                                        <button mat-stroked-button [disabled]="saving"
+                                            (click)="cancelEdit()">Cancel</button>
+                                    </div>
+                                </form>
                             </div>
 
                         </mat-card-content>
                     </mat-card>
+
+                    <!-- Interest action only shown for other people's profiles -->
+                    <div class="interest-action-bar" *ngIf="!isOwnProfile && isLoggedIn">
+                        <button mat-flat-button color="warn" (click)="sendInterest()">
+                            <mat-icon>favorite</mat-icon> {{ profile.interestSent ? 'Interest Sent' : 'Send Interest' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
