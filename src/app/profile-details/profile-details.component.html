@@ -159,12 +159,12 @@
                             </div>
 
                             <!-- Physical Attributes -->
-                            <div class="section-block" *ngIf="profile.personalDetails?.[0] as personal">
+                            <!-- Physical Attributes -->
+                            <div class="section-block">
                                 <h3 class="section-title">
                                     <mat-icon>accessibility_new</mat-icon> Physical Attributes
                                     <button mat-icon-button class="edit-pencil"
-                                        *ngIf="isOwnProfile && editingSection !== 'personal'"
-                                        (click)="startEdit('personal')">
+                                        *ngIf="isOwnProfile && editingSection === null" (click)="startEdit('personal')">
                                         <mat-icon>edit</mat-icon>
                                     </button>
                                 </h3>
@@ -176,11 +176,8 @@
                                             personal.weight?.weightName || '-' }}</span></div>
                                     <div class="info-item"><span class="label">Skin Tone</span><span class="value">{{
                                             personal.skinTone || '-' }}</span></div>
-                                    <div class="info-item"><span class="label">Food Preference</span>
-                                        <span class="value">{{ personal.foodOption === 'VEG' ? 'Vegetarian' :
-                                            (personal.foodOption === 'NONVEG' ? 'Non-Vegetarian' : personal.foodOption)
-                                            }}</span>
-                                    </div>
+                                    <div class="info-item"><span class="label">Food Preference</span><span
+                                            class="value">{{ personal.foodOption || '-' }}</span></div>
                                     <div class="info-item"><span class="label">Assets</span><span class="value">{{
                                             personal.asset || '-' }}</span></div>
                                     <div class="info-item full-row" *ngIf="personal.Interest">
@@ -191,27 +188,44 @@
 
                                 <form [formGroup]="personalForm" class="info-grid edit-grid"
                                     *ngIf="editingSection === 'personal'">
-                                    <mat-form-field appearance="outline"><mat-label>Height</mat-label><input matInput
-                                            formControlName="height"></mat-form-field>
-                                    <mat-form-field appearance="outline"><mat-label>Weight</mat-label><input matInput
-                                            formControlName="weight"></mat-form-field>
-                                    <mat-form-field appearance="outline"><mat-label>Skin Tone</mat-label><input matInput
-                                            formControlName="skinTone"></mat-form-field>
                                     <mat-form-field appearance="outline">
-                                        <mat-label>Food Preference</mat-label>
-                                        <mat-select formControlName="foodOption">
-                                            <mat-option value="VEG">Vegetarian</mat-option>
-                                            <mat-option value="NONVEG">Non-Vegetarian</mat-option>
+                                        <mat-label>Height</mat-label>
+                                        <mat-select formControlName="height">
+                                            <mat-option *ngFor="let h of heightOptions" [value]="h">{{h}}</mat-option>
                                         </mat-select>
                                     </mat-form-field>
-                                    <mat-form-field appearance="outline"><mat-label>Assets</mat-label><input matInput
-                                            formControlName="asset"></mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Weight</mat-label>
+                                        <mat-select formControlName="weight">
+                                            <mat-option *ngFor="let w of weightOptions" [value]="w">{{w}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Skin Tone</mat-label>
+                                        <mat-select formControlName="skinTone">
+                                            <mat-option *ngFor="let c of colorOptions" [value]="c">{{c}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Food Preference</mat-label>
+                                        <mat-select formControlName="foodOption" required>
+                                            <mat-option *ngFor="let f of foodOptions" [value]="f">{{f}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Assets</mat-label>
+                                        <mat-select formControlName="asset">
+                                            <mat-option *ngFor="let p of propertyValueOptions"
+                                                [value]="p">{{p}}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
                                     <mat-form-field appearance="outline" class="full-row">
                                         <mat-label>Interests / Expectations</mat-label>
                                         <textarea matInput formControlName="Interest" rows="2"></textarea>
                                     </mat-form-field>
                                     <div class="edit-actions full-row">
-                                        <button mat-flat-button color="primary" [disabled]="saving"
+                                        <button mat-flat-button color="primary"
+                                            [disabled]="saving || personalForm.invalid"
                                             (click)="saveSection('personal')">Save</button>
                                         <button mat-stroked-button [disabled]="saving"
                                             (click)="cancelEdit()">Cancel</button>

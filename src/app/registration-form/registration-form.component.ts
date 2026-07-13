@@ -450,8 +450,8 @@ export class RegistrationFormComponent implements OnInit {
             this._signupService.saveProfileImage(payload).subscribe({
                 next: () => {
                     this.isSubmitting = false;
-                    alert('Thank you for registering with us. Our team will review your details and contact you soon.');
-                    this._router.navigate(['/login']);
+                    alert('Thank you for registering with us. Our team will review your details. You will receive an activation message on WhatsApp. Once activated, you can login to your account.');
+                    this._router.navigate(['/']);
                 },
                 error: (err) => {
                     this.isSubmitting = false;

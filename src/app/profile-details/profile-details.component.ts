@@ -11,6 +11,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../auth.service';
 import { SignupService } from '../signup.service';
+import {
+    MARITAL_STATUS, RELIGION, DISTRICTS, ZODIAC, STAR, PAATHAM, DOSHAM,
+    PROPERTY_VALUE, HEIGHTS, WEIGHTS, COLORS, FOOD_OPTIONS
+} from '../registration-form/form-data'; // ADJUST PATH if different
 
 @Component({
     selector: 'app-profile-details',
@@ -41,9 +45,28 @@ export class ProfileDetailsComponent implements OnInit {
     editingSection: string | null = null;
     saving = false;
 
-    // Master data for zodiac/star dropdowns
-    zodiacList: any[] = [];
-    starList: any[] = [];
+    // ---- Static option lists (same source as registration) ----
+    maritalStatusOptions = MARITAL_STATUS;
+    religionOptions = RELIGION;
+    paathamOptions = PAATHAM;
+    doshamOptions = DOSHAM;
+    propertyValueOptions = PROPERTY_VALUE;
+    colorOptions = COLORS;
+    foodOptions = FOOD_OPTIONS;
+
+    // ---- Dynamic option lists, replaced once the API responds ----
+    districtOptions = DISTRICTS;
+    zodiacOptions = ZODIAC;
+    starOptions = STAR;
+    heightOptions = HEIGHTS;
+    weightOptions = WEIGHTS;
+
+    // Raw master rows — needed to convert display-name <-> id, same as registration
+    rawDistricts: any[] = [];
+    rawZodiacs: any[] = [];
+    rawStars: any[] = [];
+    rawHeights: any[] = [];
+    rawWeights: any[] = [];
 
     // Image upload state
     selectedImageFile: File | null = null;
@@ -54,65 +77,119 @@ export class ProfileDetailsComponent implements OnInit {
         return this.authService.isLoggedIn();
     }
 
+    // Section getters — ALWAYS return an object (never undefined), so every
+    // section block renders even when the profile has no row yet. This is
+    // what lets the owner fill in a section that was never created.
+    get personal() { return this.profile?.personalDetails?.[0] || {}; }
+    get career() { return this.profile?.careerDetails?.[0] || {}; }
+    get parent() { return this.profile?.parentDetails?.[0] || {}; }
+    get zodiacDetail() { return this.profile?.zodiacDetails?.[0] || {}; }
+
+    private readonly maritalStatusMap: Record<string, string> = {
+        'Unmarried': 'UNMARRIED',
+        'Divorced': 'DIVORCED',
+        'Divorced with Children': 'DIVORCED_WITH_CHILDREN',
+        'Widow/Widower': 'WIDOW/WIDOWER',
+        'Widow/Widower with Children': 'WIDOW/WIDOWER_WITH_CHILDREN',
+        'Separated': 'SEPARATED',
+        'Separated with Children': 'SEPARATED_WITH_CHILDREN'
+    };
+
     basicForm = this.fb.group({
         name: ['', Validators.required],
         gender: ['', Validators.required],
         religion: ['', Validators.required],
+        maritalStatus: ['', Validators.required],
+        nativePlace: ['', Validators.required],
+        district: ['', Validators.required],
     });
 
     personalForm = this.fb.group({
         height: [''],
         weight: [''],
         skinTone: [''],
-        foodOption: [''],
+        foodOption: ['', Validators.required],
         asset: [''],
         Interest: ['']
     });
 
     careerForm = this.fb.group({
-        profession: [''],
+        profession: ['', Validators.required],
         companyName: [''],
         workLocation: [''],
         monthyIncome: [''],
-        educationDetails: ['']
+        educationDetails: ['', Validators.required]
     });
 
     familyForm = this.fb.group({
-        fatherName: [''],
-        fatherMobileNumber: [''],
-        motherName: [''],
-        motherMobileNumber: [''],
-        siblingMale: [''],
-        siblingFemale: [''],
-        marriedMale: [''],
-        marriedFemale: ['']
+        fatherName: ['', Validators.required],
+        fatherMobileNumber: ['', Validators.pattern('^[0-9]{10}$')],
+        motherName: ['', Validators.required],
+        motherMobileNumber: ['', Validators.pattern('^[0-9]{10}$')],
+        siblingMale: [0],
+        siblingFemale: [0],
+        marriedMale: [0],
+        marriedFemale: [0]
     });
 
     zodiacForm = this.fb.group({
-        zodiacId: [''],
-        starId: [''],
-        patham: [''],
-        dosham: ['']
+        zodiac: ['', Validators.required],
+        star: ['', Validators.required],
+        patham: ['', Validators.required],
+        dosham: ['', Validators.required]
     });
 
     ngOnInit() {
         if (this.route.snapshot.params['id']) {
-            this.loadProfileDetails(this.route.snapshot.params['id']);
             this.loadMasterLists();
+            this.loadProfileDetails(this.route.snapshot.params['id']);
         } else {
             this.router.navigate(['/profiles']);
         }
     }
 
-    // Rename these two to whatever your existing registration flow calls for zodiac/star master data
     loadMasterLists() {
+        // ASSUMPTION: getDistricts/getHeights/getWeights exist on SignupService
+        // (mirroring getZodiacs/getStars) and return { result: [...] }.
+        this.signupService.getDistricts().subscribe({
+            next: (res: any) => {
+                this.rawDistricts = res.result || [];
+                this.districtOptions = this.rawDistricts.map((d: any) => d.districtName);
+                this.patchDependentFields();
+            },
+            error: (err: any) => console.error('Error loading district list', err)
+        });
         this.signupService.getZodiacs().subscribe({
-            next: (res: any) => this.zodiacList = res.result || [],
+            next: (res: any) => {
+                this.rawZodiacs = res.result || [];
+                this.zodiacOptions = this.rawZodiacs.map((z: any) => z.zodiacTamil);
+                this.patchDependentFields();
+            },
             error: (err: any) => console.error('Error loading zodiac list', err)
         });
         this.signupService.getStars().subscribe({
-            next: (res: any) => this.starList = res.result || [],
+            next: (res: any) => {
+                this.rawStars = res.result || [];
+                this.starOptions = this.rawStars.map((s: any) => s.starTamil);
+                this.patchDependentFields();
+            },
             error: (err) => console.error('Error loading star list', err)
+        });
+        this.signupService.getHeights().subscribe({
+            next: (res: any) => {
+                this.rawHeights = res.result || [];
+                this.heightOptions = this.rawHeights.map((h: any) => h.heightName);
+                this.patchDependentFields();
+            },
+            error: (err) => console.error('Error loading height list', err)
+        });
+        this.signupService.getWeights().subscribe({
+            next: (res: any) => {
+                this.rawWeights = res.result || [];
+                this.weightOptions = this.rawWeights.map((w: any) => w.weightName);
+                this.patchDependentFields();
+            },
+            error: (err) => console.error('Error loading weight list', err)
         });
     }
 
@@ -120,11 +197,10 @@ export class ProfileDetailsComponent implements OnInit {
         this.signupService.getProfileDetails(id).subscribe({
             next: (res) => {
                 this.profile = res.result;
-                console.log("this.authService.currentUser()?.id", this.authService.currentUser()?.id);
                 this.isOwnProfile = this.isLoggedIn &&
                     this.authService.currentUser()?.id === this.profile.id;
-                console.log("isOwnProfile", this.isOwnProfile);
                 this.patchForms();
+                this.patchDependentFields();
             },
             error: (err) => {
                 console.error(err);
@@ -133,35 +209,114 @@ export class ProfileDetailsComponent implements OnInit {
         });
     }
 
+    // Master lists and the profile can arrive in either order. Once both are
+    // present, re-patch the id-backed selects (district/zodiac/star/height/weight)
+    // so they show the correct label instead of being left blank.
+    private patchDependentFields() {
+        if (!this.profile) return;
+
+        const districtName = this.rawDistricts.find(
+            d => d.id === (this.profile.district?.id ?? this.profile.districtId)
+        )?.districtName;
+        if (districtName) this.basicForm.patchValue({ district: districtName }, { emitEvent: false });
+
+        const zodiacName = this.rawZodiacs.find(
+            z => z.id === (this.zodiacDetail.zodiac?.id ?? this.zodiacDetail.zodiacId)
+        )?.zodiacTamil;
+        if (zodiacName) this.zodiacForm.patchValue({ zodiac: zodiacName }, { emitEvent: false });
+
+        const starName = this.rawStars.find(
+            s => s.id === (this.zodiacDetail.star?.id ?? this.zodiacDetail.starId)
+        )?.starTamil;
+        if (starName) this.zodiacForm.patchValue({ star: starName }, { emitEvent: false });
+
+        const heightName = this.rawHeights.find(
+            h => h.id === (this.personal.height?.id ?? this.personal.heightId)
+        )?.heightName;
+        if (heightName) this.personalForm.patchValue({ height: heightName }, { emitEvent: false });
+
+        const weightName = this.rawWeights.find(
+            w => w.id === (this.personal.weight?.id ?? this.personal.weightId)
+        )?.weightName;
+        if (weightName) this.personalForm.patchValue({ weight: weightName }, { emitEvent: false });
+    }
+
     patchForms() {
-        const personal = this.profile.personalDetails?.[0] || {};
-        const career = this.profile.careerDetails?.[0] || {};
-        const parent = this.profile.parentDetails?.[0] || {};
-        const zodiac = this.profile.zodiacDetails?.[0] || {};
+        const personal = this.personal;
+        const career = this.career;
+        const parent = this.parent;
+        const zodiac = this.zodiacDetail;
 
         this.basicForm.patchValue({
             name: this.profile.name,
-            gender: this.profile.gender,
-            religion: this.profile.religion
+            // ASSUMPTION: API returns 'MALE'/'FEMALE' as registration sends them
+            gender: this.profile.gender === 'MALE' ? 'Male'
+                : this.profile.gender === 'FEMALE' ? 'Female' : '',
+            religion: this.religionOptions.find(
+                (r: string) => r.toUpperCase() === this.profile.religion
+            ) || this.profile.religion || '',
+            maritalStatus: Object.keys(this.maritalStatusMap)
+                .find(k => this.maritalStatusMap[k] === this.profile.martialStatus) || '',
+            nativePlace: this.profile.nativePlace || '',
+            district: this.profile.district?.districtName || ''
         });
 
-        this.personalForm.patchValue(personal);
+        this.personalForm.patchValue({
+            height: personal.height?.heightName || '',
+            weight: personal.weight?.heightName || personal.weight?.weightName || '',
+            skinTone: personal.skinTone || '',
+            foodOption: personal.foodOption || '',
+            asset: personal.asset || '',
+            Interest: personal.Interest || ''
+        });
 
         this.careerForm.patchValue({
-            ...career,
+            profession: career.profession || '',
+            companyName: career.companyName || '',
+            workLocation: career.workLocation || '',
+            monthyIncome: career.monthyIncome || '',
             educationDetails: Array.isArray(career.educationDetails)
                 ? career.educationDetails.join(', ')
-                : career.educationDetails
+                : (career.educationDetails || '')
         });
 
-        this.familyForm.patchValue(parent);
+        this.familyForm.patchValue({
+            fatherName: parent.fatherName || '',
+            fatherMobileNumber: parent.fatherMobileNumber || '',
+            motherName: parent.motherName || '',
+            motherMobileNumber: parent.motherMobileNumber || '',
+            siblingMale: parent.siblingMale || 0,
+            siblingFemale: parent.siblingFemale || 0,
+            marriedMale: parent.marriedMale || 0,
+            marriedFemale: parent.marriedFemale || 0
+        });
 
         this.zodiacForm.patchValue({
-            zodiacId: zodiac.zodiac?.id ?? zodiac.zodiacId,
-            starId: zodiac.star?.id ?? zodiac.starId,
-            patham: zodiac.patham,
-            dosham: zodiac.dosham
+            zodiac: zodiac.zodiac?.zodiacTamil || '',
+            star: zodiac.star?.starTamil || '',
+            // ASSUMPTION: patham is stored as a bare number ('1'..'4'). If your
+            // PAATHAM options are labels like "1st Paatham", this needs a lookup
+            // similar to zodiac/star above instead of a raw string match.
+            patham: zodiac.patham ? `${zodiac.patham}` : '',
+            dosham: zodiac.dosham || ''
         });
+    }
+
+    // ---- Same id-lookup helpers as registration ----
+    private getDistrictId(name: string): number | null {
+        return this.rawDistricts.find(d => d.districtName === name)?.id ?? null;
+    }
+    private getZodiacId(name: string): number | null {
+        return this.rawZodiacs.find(z => z.zodiacTamil === name)?.id ?? null;
+    }
+    private getStarId(name: string): number | null {
+        return this.rawStars.find(s => s.starTamil === name)?.id ?? null;
+    }
+    private getHeightId(name: string): number | null {
+        return this.rawHeights.find(h => h.heightName === name)?.id ?? null;
+    }
+    private getWeightId(name: string): number | null {
+        return this.rawWeights.find(w => w.weightName === name)?.id ?? null;
     }
 
     startEdit(section: string) {
@@ -179,15 +334,37 @@ export class ProfileDetailsComponent implements OnInit {
         this.saving = true;
 
         const requests: Record<string, () => any> = {
-            basic: () => this.signupService.updateProfileDetails(id, this.basicForm.value),
-            personal: () => this.signupService.updateProfilePersonal(id, this.personalForm.value),
+            basic: () => this.signupService.updateProfileDetails(id, {
+                name: this.basicForm.value.name,
+                gender: this.basicForm.value.gender === 'Male' ? 'MALE' : 'FEMALE',
+                religion: this.basicForm.value.religion?.toUpperCase(),
+                martialStatus: this.maritalStatusMap[this.basicForm.value.maritalStatus || ''] || 'SEPARATED_WITH_CHILDREN',
+                nativePlace: this.basicForm.value.nativePlace,
+                districtId: this.getDistrictId(this.basicForm.value.district || '')
+            }),
+            personal: () => this.signupService.updateProfilePersonal(id, {
+                heightId: this.getHeightId(this.personalForm.value.height || ''),
+                weightId: this.getWeightId(this.personalForm.value.weight || ''),
+                skinTone: this.personalForm.value.skinTone,
+                foodOption: this.personalForm.value.foodOption,
+                asset: this.personalForm.value.asset,
+                Interest: this.personalForm.value.Interest
+            }),
             career: () => this.signupService.updateProfileCareer(id, {
-                ...this.careerForm.value,
+                profession: this.careerForm.value.profession,
+                companyName: this.careerForm.value.companyName,
+                workLocation: this.careerForm.value.workLocation,
+                monthyIncome: this.careerForm.value.monthyIncome ? Number(this.careerForm.value.monthyIncome) : 0,
                 educationDetails: (this.careerForm.value.educationDetails as string)
                     ?.split(',').map(s => s.trim()).filter(Boolean)
             }),
             family: () => this.signupService.updateProfileFamily(id, this.familyForm.value),
-            zodiac: () => this.signupService.updateProfileZodiac(id, this.zodiacForm.value),
+            zodiac: () => this.signupService.updateProfileZodiac(id, {
+                zodiacId: this.getZodiacId(this.zodiacForm.value.zodiac || ''),
+                starId: this.getStarId(this.zodiacForm.value.star || ''),
+                patham: this.zodiacForm.value.patham?.match(/\d+/)?.[0] || '1',
+                dosham: this.zodiacForm.value.dosham
+            }),
         };
 
         requests[section]().subscribe({
@@ -204,7 +381,7 @@ export class ProfileDetailsComponent implements OnInit {
         });
     }
 
-    // ---- Image upload ----
+    // ---- Image upload (unchanged) ----
     onImageSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files[0]) {
@@ -220,7 +397,6 @@ export class ProfileDetailsComponent implements OnInit {
         this.imagePreviewUrl = null;
     }
 
-    // Adjust getUploadUrl to match your existing presigned-URL method name from the S3 flow you already built
     uploadImage() {
         if (!this.selectedImageFile || !this.profile) return;
         this.uploadingImage = true;
