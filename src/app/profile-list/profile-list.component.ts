@@ -397,4 +397,8 @@ export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
     callAdvertiser() {
         window.location.href = 'tel:8903960263';
     }
+    viewMyProfile() {
+        const userId = this.authService.currentUser()?.id;
+        if (userId) this.router.navigate(['/profile-details', userId]);
+    }
 }
