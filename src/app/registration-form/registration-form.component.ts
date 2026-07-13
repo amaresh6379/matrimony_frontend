@@ -450,7 +450,7 @@ export class RegistrationFormComponent implements OnInit {
             this._signupService.saveProfileImage(payload).subscribe({
                 next: () => {
                     this.isSubmitting = false;
-                    alert('Registration Completed Successfully!');
+                    alert('Thank you for registering with us. Our team will review your details and contact you soon.');
                     this._router.navigate(['/login']);
                 },
                 error: (err) => {
