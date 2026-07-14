@@ -10,7 +10,9 @@
 
                 <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Matrimony ID / Mobile Number</mat-label>
-                    <input matInput formControlName="matrimonyId" placeholder="Ex: VCM1">
+                    <input matInput formControlName="matrimonyId" placeholder="Ex: VCM1"
+                        (input)="loginForm.get('matrimonyId')?.setValue(matrimonyIdInput.value.split(' ').join(''))"
+                        #matrimonyIdInput>
                     <mat-icon matSuffix>person</mat-icon>
                     <mat-error *ngIf="loginForm.get('matrimonyId')?.hasError('required')">
                         ID is required
@@ -19,7 +21,9 @@
 
                 <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Password</mat-label>
-                    <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password">
+                    <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+                        (input)="loginForm.get('password')?.setValue(passwordInput.value.split(' ').join(''))"
+                        #passwordInput>
                     <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword" type="button">
                         <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
                     </button>

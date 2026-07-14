@@ -73,6 +73,11 @@ export class ProfileDetailsComponent implements OnInit {
     imagePreviewUrl: string | null = null;
     uploadingImage = false;
 
+    // Jathagam upload state
+    selectedJathagamFile: File | null = null;
+    jathagamPreviewUrl: string | null = null;
+    uploadingJathagam = false;
+
     get isLoggedIn() {
         return this.authService.isLoggedIn();
     }
@@ -133,8 +138,8 @@ export class ProfileDetailsComponent implements OnInit {
     });
 
     zodiacForm = this.fb.group({
-        zodiac: ['', Validators.required],
-        star: ['', Validators.required],
+        zodiacId: ['', Validators.required],
+        starId: ['', Validators.required],
         patham: ['', Validators.required],
         dosham: ['', Validators.required]
     });
@@ -153,7 +158,7 @@ export class ProfileDetailsComponent implements OnInit {
         // (mirroring getZodiacs/getStars) and return { result: [...] }.
         this.signupService.getDistricts().subscribe({
             next: (res: any) => {
-                this.rawDistricts = res.result || [];
+                this.rawDistricts = res || [];
                 this.districtOptions = this.rawDistricts.map((d: any) => d.districtName);
                 this.patchDependentFields();
             },
@@ -161,7 +166,7 @@ export class ProfileDetailsComponent implements OnInit {
         });
         this.signupService.getZodiacs().subscribe({
             next: (res: any) => {
-                this.rawZodiacs = res.result || [];
+                this.rawZodiacs = res || [];
                 this.zodiacOptions = this.rawZodiacs.map((z: any) => z.zodiacTamil);
                 this.patchDependentFields();
             },
@@ -169,7 +174,7 @@ export class ProfileDetailsComponent implements OnInit {
         });
         this.signupService.getStars().subscribe({
             next: (res: any) => {
-                this.rawStars = res.result || [];
+                this.rawStars = res || [];
                 this.starOptions = this.rawStars.map((s: any) => s.starTamil);
                 this.patchDependentFields();
             },
@@ -177,7 +182,7 @@ export class ProfileDetailsComponent implements OnInit {
         });
         this.signupService.getHeights().subscribe({
             next: (res: any) => {
-                this.rawHeights = res.result || [];
+                this.rawHeights = res || [];
                 this.heightOptions = this.rawHeights.map((h: any) => h.heightName);
                 this.patchDependentFields();
             },
@@ -185,7 +190,7 @@ export class ProfileDetailsComponent implements OnInit {
         });
         this.signupService.getWeights().subscribe({
             next: (res: any) => {
-                this.rawWeights = res.result || [];
+                this.rawWeights = res || [];
                 this.weightOptions = this.rawWeights.map((w: any) => w.weightName);
                 this.patchDependentFields();
             },
@@ -197,8 +202,27 @@ export class ProfileDetailsComponent implements OnInit {
         this.signupService.getProfileDetails(id).subscribe({
             next: (res) => {
                 this.profile = res.result;
+
+                // Append cache busters to image URLs to prevent rendering stale cached files
+                const timestamp = Date.now();
+                if (this.profile && this.profile.profileImages && this.profile.profileImages.length > 0) {
+                    this.profile.profileImages.forEach((img: any) => {
+                        if (img.profileUrl) {
+                            img.profileUrl = img.profileUrl.split('?')[0] + `?t=${timestamp}`;
+                        }
+                    });
+                }
+                if (this.profile && this.profile.zodiacDetails && this.profile.zodiacDetails.length > 0) {
+                    this.profile.zodiacDetails.forEach((z: any) => {
+                        if (z.jathgamImage) {
+                            z.jathgamImage = z.jathgamImage.split('?')[0] + `?t=${timestamp}`;
+                        }
+                    });
+                }
+
                 this.isOwnProfile = this.isLoggedIn &&
                     this.authService.currentUser()?.id === this.profile.id;
+                console.log("isOwnProfile", this.isOwnProfile, "selectedImageFile", this.selectedImageFile);
                 this.patchForms();
                 this.patchDependentFields();
             },
@@ -214,21 +238,12 @@ export class ProfileDetailsComponent implements OnInit {
     // so they show the correct label instead of being left blank.
     private patchDependentFields() {
         if (!this.profile) return;
+        this.basicForm.patchValue({ district: this.profile.districtId }, { emitEvent: false });
 
-        const districtName = this.rawDistricts.find(
-            d => d.id === (this.profile.district?.id ?? this.profile.districtId)
-        )?.districtName;
-        if (districtName) this.basicForm.patchValue({ district: districtName }, { emitEvent: false });
-
-        const zodiacName = this.rawZodiacs.find(
-            z => z.id === (this.zodiacDetail.zodiac?.id ?? this.zodiacDetail.zodiacId)
-        )?.zodiacTamil;
-        if (zodiacName) this.zodiacForm.patchValue({ zodiac: zodiacName }, { emitEvent: false });
-
-        const starName = this.rawStars.find(
-            s => s.id === (this.zodiacDetail.star?.id ?? this.zodiacDetail.starId)
-        )?.starTamil;
-        if (starName) this.zodiacForm.patchValue({ star: starName }, { emitEvent: false });
+        const zodiacId = this.zodiacDetail.zodiac?.id ?? this.zodiacDetail.zodiacId;
+        const starId = this.zodiacDetail.star?.id ?? this.zodiacDetail.starId;
+        if (zodiacId) this.zodiacForm.patchValue({ zodiacId: zodiacId }, { emitEvent: false });
+        if (starId) this.zodiacForm.patchValue({ starId: starId }, { emitEvent: false });
 
         const heightName = this.rawHeights.find(
             h => h.id === (this.personal.height?.id ?? this.personal.heightId)
@@ -258,14 +273,15 @@ export class ProfileDetailsComponent implements OnInit {
             maritalStatus: Object.keys(this.maritalStatusMap)
                 .find(k => this.maritalStatusMap[k] === this.profile.martialStatus) || '',
             nativePlace: this.profile.nativePlace || '',
-            district: this.profile.district?.districtName || ''
+            district: this.profile.districtId || ''
         });
 
         this.personalForm.patchValue({
             height: personal.height?.heightName || '',
             weight: personal.weight?.heightName || personal.weight?.weightName || '',
             skinTone: personal.skinTone || '',
-            foodOption: personal.foodOption || '',
+            foodOption: personal.foodOption === 'VEG' ? 'சைவம்' :
+                personal.foodOption === 'NONVEG' ? 'அசைவம்' : 'எப்போதாவது அசைவம்',
             asset: personal.asset || '',
             Interest: personal.Interest || ''
         });
@@ -292,11 +308,8 @@ export class ProfileDetailsComponent implements OnInit {
         });
 
         this.zodiacForm.patchValue({
-            zodiac: zodiac.zodiac?.zodiacTamil || '',
-            star: zodiac.star?.starTamil || '',
-            // ASSUMPTION: patham is stored as a bare number ('1'..'4'). If your
-            // PAATHAM options are labels like "1st Paatham", this needs a lookup
-            // similar to zodiac/star above instead of a raw string match.
+            zodiacId: zodiac.zodiac?.id || '',
+            starId: zodiac.star?.id || '',
             patham: zodiac.patham ? `${zodiac.patham}` : '',
             dosham: zodiac.dosham || ''
         });
@@ -340,15 +353,16 @@ export class ProfileDetailsComponent implements OnInit {
                 religion: this.basicForm.value.religion?.toUpperCase(),
                 martialStatus: this.maritalStatusMap[this.basicForm.value.maritalStatus || ''] || 'SEPARATED_WITH_CHILDREN',
                 nativePlace: this.basicForm.value.nativePlace,
-                districtId: this.getDistrictId(this.basicForm.value.district || '')
+                districtId: this.basicForm.value.district
             }),
             personal: () => this.signupService.updateProfilePersonal(id, {
                 heightId: this.getHeightId(this.personalForm.value.height || ''),
                 weightId: this.getWeightId(this.personalForm.value.weight || ''),
                 skinTone: this.personalForm.value.skinTone,
-                foodOption: this.personalForm.value.foodOption,
+                foodOption: this.personalForm.value.foodOption === 'சைவம்' ? 'VEG' :
+                    this.personalForm.value.foodOption === 'அசைவம்' ? 'NONVEG' : 'SOMETIMES_NONVEG',
                 asset: this.personalForm.value.asset,
-                Interest: this.personalForm.value.Interest
+                interest: this.personalForm.value.Interest
             }),
             career: () => this.signupService.updateProfileCareer(id, {
                 profession: this.careerForm.value.profession,
@@ -360,8 +374,8 @@ export class ProfileDetailsComponent implements OnInit {
             }),
             family: () => this.signupService.updateProfileFamily(id, this.familyForm.value),
             zodiac: () => this.signupService.updateProfileZodiac(id, {
-                zodiacId: this.getZodiacId(this.zodiacForm.value.zodiac || ''),
-                starId: this.getStarId(this.zodiacForm.value.star || ''),
+                zodiacId: this.zodiacForm.value.zodiacId || '',
+                starId: this.zodiacForm.value.starId || '',
                 patham: this.zodiacForm.value.patham?.match(/\d+/)?.[0] || '1',
                 dosham: this.zodiacForm.value.dosham
             }),
@@ -381,55 +395,81 @@ export class ProfileDetailsComponent implements OnInit {
         });
     }
 
-    // ---- Image upload (unchanged) ----
-    onImageSelected(event: Event) {
+    // ---- Image upload ----
+    onImageSelected(event: Event, isProfileImage: boolean) {
         const input = event.target as HTMLInputElement;
         if (input.files && input.files[0]) {
-            this.selectedImageFile = input.files[0];
+            const file = input.files[0];
             const reader = new FileReader();
-            reader.onload = () => this.imagePreviewUrl = reader.result as string;
-            reader.readAsDataURL(this.selectedImageFile);
+            if (isProfileImage) {
+                this.selectedImageFile = file;
+                reader.onload = () => this.imagePreviewUrl = reader.result as string;
+            } else {
+                this.selectedJathagamFile = file;
+                reader.onload = () => this.jathagamPreviewUrl = reader.result as string;
+            }
+            reader.readAsDataURL(file);
         }
     }
 
-    cancelImageEdit() {
-        this.selectedImageFile = null;
-        this.imagePreviewUrl = null;
+    cancelImageEdit(isProfileImage: boolean) {
+        if (isProfileImage) {
+            this.selectedImageFile = null;
+            this.imagePreviewUrl = null;
+        } else {
+            this.selectedJathagamFile = null;
+            this.jathagamPreviewUrl = null;
+        }
     }
 
-    uploadImage() {
-        if (!this.selectedImageFile || !this.profile) return;
-        this.uploadingImage = true;
-        const file = this.selectedImageFile;
+    uploadImage(isProfileImage: boolean) {
+        const file = isProfileImage ? this.selectedImageFile : this.selectedJathagamFile;
+        if (!file || !this.profile) return;
 
-        this.signupService.getSignedUrl('profile/profileimage', this.profile.matrimonyId, file.type).subscribe({
+        if (isProfileImage) {
+            this.uploadingImage = true;
+        } else {
+            this.uploadingJathagam = true;
+        }
+
+        const extension = file.name.split('.').pop() || 'jpg';
+        const uniqueFileName = `${this.profile.matrimonyId}_${Date.now()}.${extension}`;
+
+        this.signupService.getSignedUrl(isProfileImage ? 'profile/profileimage' : 'profile/jathagamimage', uniqueFileName, file.type).subscribe({
             next: (res: any) => {
                 const { signedUrl, publicUrl } = res.result;
                 fetch(signedUrl, {
                     method: 'PUT',
                     body: file,
-                    headers: { 'Content-Type': file.type }
+                    headers: { 'Content-Type': file.type, 'Cache-Control': 'no-cache, must-revalidate' }
                 }).then(() => {
-                    this.signupService.updateProfileImage(this.profile.id, { profileUrl: publicUrl }).subscribe({
+                    this.signupService.updateProfileImage(this.profile.id, isProfileImage ? { profileUrl: publicUrl } : { jathagamImage: publicUrl }, isProfileImage).subscribe({
                         next: () => {
-                            this.uploadingImage = false;
-                            this.cancelImageEdit();
+                            if (isProfileImage) {
+                                this.uploadingImage = false;
+                            } else {
+                                this.uploadingJathagam = false;
+                            }
+                            this.cancelImageEdit(isProfileImage);
                             this.loadProfileDetails(this.profile.id);
                         },
                         error: (err: any) => {
                             this.uploadingImage = false;
+                            this.uploadingJathagam = false;
                             console.error(err);
                             alert('Failed to save image. Please try again.');
                         }
                     });
                 }).catch((err) => {
                     this.uploadingImage = false;
+                    this.uploadingJathagam = false;
                     console.error(err);
                     alert('Upload failed. Please try again.');
                 });
             },
             error: (err: any) => {
                 this.uploadingImage = false;
+                this.uploadingJathagam = false;
                 console.error(err);
                 alert('Failed to prepare upload. Please try again.');
             }

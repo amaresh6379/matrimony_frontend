@@ -233,11 +233,14 @@ export class RegistrationFormComponent implements OnInit {
         }
     }
 
-    // Helper to format Date to YYYY-MM-DD
+    // Helper to format Date to YYYY-MM-DD using local timezone to avoid off-by-one errors
     private formatDate(dateVal: any): string {
         if (!dateVal) return '';
         const d = new Date(dateVal);
-        return d.toISOString().split('T')[0];
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     // Master mappings helper

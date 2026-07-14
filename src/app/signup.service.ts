@@ -138,8 +138,8 @@ export class SignupService {
     updateProfileDetails(id: number, data: any) {
         return this.http.put<any>(`${this.baseUrl}/profile/${id}`, data);
     }
-    updateProfileImage(id: number, data: any) {
-        return this.http.put<any>(`${this.baseUrl}/profile/${id}/profileImage`, data);
+    updateProfileImage(id: number, data: any, isProfileImage: boolean) {
+        return isProfileImage ? this.http.put<any>(`${this.baseUrl}/profile/${id}/profileImage`, data) : this.http.put<any>(`${this.baseUrl}/profile/${id}/jathagamImage`, data);
     }
     updateProfileCareer(id: number, data: any) {
         return this.http.put<any>(`${this.baseUrl}/profile/${id}/career`, data);

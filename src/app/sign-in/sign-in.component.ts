@@ -44,9 +44,10 @@ export class SignInComponent {
             this.isLoading = true;
             this.errorMsg = '';
 
-            const { matrimonyId, password } = this.loginForm.value;
+            const matrimonyId = (this.loginForm.value.matrimonyId || '').trim();
+            const password = (this.loginForm.value.password || '').trim();
 
-            this.authService.login(matrimonyId!, password!).subscribe(result => {
+            this.authService.login(matrimonyId, password).subscribe(result => {
                 this.isLoading = false;
                 if (result.success) {
                     this.router.navigate(['/profiles']);
