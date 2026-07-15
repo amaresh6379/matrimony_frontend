@@ -56,6 +56,7 @@ export class RegistrationFormComponent implements OnInit {
 
     // Mode configuration
     isSignupMode = false;
+    hidePassword = true;
 
     // Data Constants
     maritalStatusOptions = MARITAL_STATUS;
@@ -152,10 +153,6 @@ export class RegistrationFormComponent implements OnInit {
             const passwordControl = this.basicDetailsForm.get('password');
             if (this.isSignupMode) {
                 passwordControl?.setValidators(Validators.required);
-
-                // Clear photo required validator
-                this.profilePhotoForm.get('photo')?.clearValidators();
-                this.profilePhotoForm.get('photo')?.updateValueAndValidity();
             } else {
                 passwordControl?.clearValidators();
             }
@@ -432,6 +429,10 @@ export class RegistrationFormComponent implements OnInit {
                 }
             });
         }
+    }
+
+    scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async onSubmit() {

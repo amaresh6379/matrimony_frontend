@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, from } from 'rxjs';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -93,11 +93,16 @@ export class SignupService {
     }
 
     uploadFileToS3(signedUrl: string, file: File): Observable<any> {
-        return this.http.put(signedUrl, file, {
-            headers: {
-                'Content-Type': file.type
-            }
-        });
+        return from(
+            fetch(signedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type,
+                    'Cache-Control': 'no-cache, must-revalidate'
+                }
+            })
+        );
     }
 
     // --- Matches & Interests ---

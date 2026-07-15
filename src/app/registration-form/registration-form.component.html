@@ -10,7 +10,8 @@
       </div>
     </div>
 
-    <mat-stepper [linear]="isLinear" #stepper labelPosition="bottom" class="custom-stepper">
+    <mat-stepper [linear]="isLinear" #stepper labelPosition="bottom" class="custom-stepper"
+      (selectionChange)="scrollToTop()">
 
       <!-- PAGE 1: Basic Details -->
       <mat-step [stepControl]="basicDetailsForm">
@@ -71,9 +72,14 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width" *ngIf="isSignupMode">
-            <mat-label>Password</mat-label>
-            <input matInput formControlName="password" type="password" required>
-            <mat-error>Password is required</mat-error>
+            <mat-label>Set Password</mat-label>
+            <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" required>
+            <button mat-icon-button matSuffix (click)="hidePassword = !hidePassword"
+              [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'" [attr.aria-pressed]="!hidePassword"
+              type="button">
+              <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+            <mat-error>Password is required (Enter a password to set your own password)</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -119,6 +125,7 @@
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Profession (தொழில்)</mat-label>
             <input matInput formControlName="profession" required class="tamil-text">
+            <mat-error>Profession is required (Enter NIL if none)</mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
@@ -304,16 +311,16 @@
           <h3 class="section-title">Profile Photo</h3>
 
           <div class="photo-upload-container">
-            <div class="avatar-preview-wrapper animate-preview" *ngIf="!isSignupMode || profilePreviewUrl">
+            <div class="avatar-preview-wrapper animate-preview" *ngIf="profilePreviewUrl">
               <img [src]="profilePreviewUrl" alt="Profile Preview" class="avatar-preview">
             </div>
 
             <button type="button" mat-flat-button color="accent" (click)="fileInput.click()">
-              <mat-icon>cloud_upload</mat-icon> {{ isSignupMode ? 'Upload Photo (Optional)' : 'Upload Photo' }}
+              <mat-icon>cloud_upload</mat-icon> Upload Photo
             </button>
             <input hidden (change)="onProfilePhotoSelected($event)" #fileInput type="file" accept="image/*">
 
-            <p *ngIf="profilePhotoForm.get('photo')?.invalid && profilePhotoForm.get('photo')?.touched && !isSignupMode"
+            <p *ngIf="profilePhotoForm.get('photo')?.invalid && profilePhotoForm.get('photo')?.touched"
               class="error-text">
               Profile photo is required.
             </p>
@@ -324,7 +331,7 @@
         <div class="sticky-footer">
           <button mat-stroked-button matStepperPrevious class="action-btn" [disabled]="isSubmitting">Back</button>
           <button type="button" mat-raised-button color="primary" class="action-btn" (click)="onSubmit()"
-            [disabled]="(!isSignupMode && profilePhotoForm.invalid) || isSubmitting">
+            [disabled]="profilePhotoForm.invalid || isSubmitting">
             {{ isSubmitting ? 'Submitting...' : 'Submit' }}
           </button>
         </div>

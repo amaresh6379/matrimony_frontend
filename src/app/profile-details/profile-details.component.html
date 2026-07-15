@@ -368,8 +368,11 @@
                                         <mat-label>Education (comma-separated)</mat-label>
                                         <input matInput formControlName="educationDetails">
                                     </mat-form-field>
-                                    <mat-form-field appearance="outline"><mat-label>Profession</mat-label><input
-                                            matInput formControlName="profession"></mat-form-field>
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Profession</mat-label>
+                                        <input matInput formControlName="profession" required class="tamil-text">
+                                        <mat-error>Profession is required (Enter NIL if none)</mat-error>
+                                    </mat-form-field>
                                     <mat-form-field appearance="outline"><mat-label>Company</mat-label><input matInput
                                             formControlName="companyName"></mat-form-field>
                                     <mat-form-field appearance="outline"><mat-label>Work Location</mat-label><input
