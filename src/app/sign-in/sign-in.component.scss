@@ -1,15 +1,57 @@
+$theme-red: #d32f2f;
+$theme-blue: #1976d2;
+$secondary-text: #666;
+$primary-text: #333;
+$border-color: #e0e0e0;
+
 .login-container {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; // Align to top of the page
     min-height: 100vh;
     background-color: #f5f5f5;
-    padding: 20px;
+    padding: 60px 20px 20px 20px; // Padding on top to give some space
+    box-sizing: border-box;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.logo-area {
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    width: 100%;
+
+    &:hover {
+        transform: scale(1.02);
+    }
+
+    .tamil-title {
+        margin: 0;
+        color: $theme-red;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .english-title {
+        margin: 4px 0 0 0;
+        color: $secondary-text;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.3;
+    }
 }
 
 .login-card {
     width: 100%;
-    max-width: 400px;
     padding: 20px 10px;
 
     mat-card-header {
@@ -18,13 +60,8 @@
 
         mat-card-title {
             font-size: 24px;
-            color: #d32f2f;
+            color: $theme-red;
             font-weight: 700;
-        }
-
-        mat-card-subtitle {
-            color: #666;
-            margin-top: 5px;
         }
     }
 
@@ -41,7 +78,7 @@
     }
 
     .error-box {
-        color: #d32f2f;
+        color: $theme-red;
         background: #ffebee;
         padding: 10px;
         border-radius: 4px;
@@ -57,7 +94,7 @@
         font-size: 13px;
 
         a {
-            color: #1976d2;
+            color: $theme-blue;
             text-decoration: none;
 
             &:hover {

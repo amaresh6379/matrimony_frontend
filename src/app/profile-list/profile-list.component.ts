@@ -1,11 +1,10 @@
-import { Component, ViewChild, OnInit, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -53,7 +52,6 @@ interface Profile {
         MatButtonModule,
         MatIconModule,
         MatChipsModule,
-        MatPaginatorModule,
         MatExpansionModule,
         MatInputModule,
         MatFormFieldModule,
@@ -62,7 +60,7 @@ interface Profile {
     templateUrl: './profile-list.component.html',
     styleUrl: './profile-list.component.scss'
 })
-export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ProfileListComponent implements OnInit, OnDestroy {
     private _fb = inject(FormBuilder);
     private router = inject(Router);
     private authService = inject(AuthService);
@@ -81,8 +79,6 @@ export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
     pageIndex = 0;
     visibleProfiles: Profile[] = [];
     allProfiles: Profile[] = [];
-
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
 
     filterForm = this._fb.group({
         searchQuery: [''],
@@ -119,15 +115,8 @@ export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.filterForm.valueChanges.subscribe(() => {
             this.pageIndex = 0;
-            if (this.paginator) this.paginator.firstPage();
             this.updateVisibleProfiles();
         });
-    }
-
-    ngAfterViewInit() {
-        if (this.paginator) {
-            this.paginator.pageIndex = this.pageIndex;
-        }
     }
 
     ngOnDestroy() {
@@ -254,10 +243,52 @@ export class ProfileListComponent implements OnInit, AfterViewInit, OnDestroy {
         return age;
     }
 
-    handlePageEvent(e: PageEvent) {
-        this.pageIndex = e.pageIndex;
-        this.pageSize = e.pageSize;
+    totalPages(): number {
+        return Math.ceil(this.totalProfiles / this.pageSize) || 1;
+    }
+
+    getPagesArray(): number[] {
+        const total = this.totalPages();
+        return Array.from({ length: total }, (_, i) => i);
+    }
+
+    goToPage(index: number) {
+        this.pageIndex = index;
         this.updateVisibleProfiles();
+        this.scrollToProfileList();
+    }
+
+    goToPreviousPage() {
+        if (this.pageIndex > 0) {
+            this.goToPage(this.pageIndex - 1);
+        }
+    }
+
+    goToNextPage() {
+        if (this.pageIndex < this.totalPages() - 1) {
+            this.goToPage(this.pageIndex + 1);
+        }
+    }
+
+    onPageSizeChange(event: Event) {
+        const selectElement = event.target as HTMLSelectElement;
+        this.pageSize = Number(selectElement.value);
+        this.pageIndex = 0;
+        this.updateVisibleProfiles();
+        this.scrollToProfileList();
+    }
+
+    private scrollToProfileList() {
+        setTimeout(() => {
+            const element = document.getElementById('profile-list-start');
+            if (element) {
+                const yOffset = -90; // offset spacing for sticky header
+                const rect = element.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const targetY = rect.top + scrollTop + yOffset;
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
+            }
+        }, 50);
     }
 
     updateVisibleProfiles() {

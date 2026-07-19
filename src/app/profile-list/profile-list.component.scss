@@ -44,31 +44,84 @@ $theme-green: #388e3c;
         }
 
         .user-nav {
-            font-size: 14px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
 
-            a {
+            .nav-btn {
+                border: none;
                 cursor: pointer;
-                color: $theme-blue;
-                font-weight: 600;
-                text-decoration: none;
+                font-weight: 700;
+                font-size: 15px;
+                padding: 10px 20px;
+                border-radius: 4px;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.2s ease;
+                min-height: 44px; // Mobile friendly min touch size
 
-                &:hover {
-                    text-decoration: underline;
+                mat-icon {
+                    font-size: 18px;
+                    width: 18px;
+                    height: 18px;
+                    line-height: 18px;
                 }
-            }
 
-            .divider {
-                color: #ccc;
+                &.register-btn {
+                    background: $theme-red;
+                    color: white;
+                    border: 1px solid $theme-red;
+
+                    &:hover {
+                        background: darken($theme-red, 5%);
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 8px rgba(211, 47, 47, 0.2);
+                    }
+                }
+
+                &.login-btn {
+                    background: transparent;
+                    color: $theme-blue;
+                    border: 2px solid $theme-blue;
+
+                    &:hover {
+                        background: rgba($theme-blue, 0.05);
+                        transform: translateY(-1px);
+                    }
+                }
+
+                &.logout-btn {
+                    background: transparent;
+                    color: $secondary-text;
+                    border: 1px solid $border-color;
+
+                    &:hover {
+                        background: #eee;
+                    }
+                }
             }
         }
 
         @media (max-width: 600px) {
             flex-direction: column;
             text-align: center;
-            gap: 10px;
+            gap: 12px;
+            padding: 5px 0;
+
+            .user-nav {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+
+                .nav-btn {
+                    flex: 1; // fill space equally
+                    justify-content: center;
+                    font-size: 14px;
+                    padding: 8px 12px;
+                    min-height: 30px; // bigger hit area for mobile
+                }
+            }
         }
     }
 }
@@ -292,6 +345,42 @@ $theme-green: #388e3c;
 
             &:hover {
                 background: darken($theme-red, 5%);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .btn-primary {
+                flex: 1;
+                background: $theme-red;
+                border: 1px solid $theme-red;
+                color: white;
+                padding: 8px 0;
+                border-radius: 4px;
+                font-weight: 600;
+                font-size: 15px;
+                cursor: pointer;
+
+                &:hover {
+                    background: darken($theme-red, 5%);
+                }
+            }
+
+            .btn-outline {
+                border: 1px solid #ccc;
+                background: transparent;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-weight: 600;
+                font-size: 15px;
+                color: #555;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+
+                &:hover {
+                    background: #eee;
+                }
             }
         }
 
@@ -604,6 +693,167 @@ $theme-green: #388e3c;
             text-align: center;
             align-items: center;
             gap: 10px;
+        }
+    }
+}
+
+// Custom Pagination
+.custom-paginator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid $border-color;
+    margin-top: 20px;
+    gap: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+    .paginator-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+
+        .nav-btn {
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 0 16px !important;
+            height: 40px !important;
+            line-height: 40px !important;
+            border-radius: 6px !important;
+            background-color: $theme-red !important;
+            color: white !important;
+            transition: all 0.2s ease;
+
+            &:hover:not([disabled]) {
+                background-color: darken($theme-red, 5%) !important;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            }
+
+            &[disabled] {
+                background-color: #e0e0e0 !important;
+                color: #888888 !important;
+                cursor: not-allowed;
+            }
+
+            mat-icon {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+                line-height: 20px;
+            }
+
+            &.prev-btn mat-icon {
+                margin-right: 4px;
+            }
+
+            &.next-btn mat-icon {
+                margin-left: 4px;
+            }
+        }
+
+        .page-numbers {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+
+            button {
+                min-width: 36px !important;
+                width: 36px !important;
+                height: 36px !important;
+                padding: 0 !important;
+                border-radius: 50% !important;
+                font-weight: 600;
+                color: #555;
+                font-size: 14px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background-color: rgba(211, 47, 47, 0.08) !important;
+                    color: $theme-red;
+                }
+
+                &.active-page {
+                    background-color: $theme-red !important;
+                    color: white !important;
+                    box-shadow: 0 2px 5px rgba(211, 47, 47, 0.3);
+                }
+            }
+        }
+    }
+
+    .paginator-options {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: $secondary-text;
+
+        .page-size-label {
+            font-weight: 500;
+        }
+
+        .page-size-select {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background-color: white;
+            color: $primary-text;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+
+            &:focus {
+                border-color: $theme-blue;
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+        padding: 15px 10px;
+
+        .paginator-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+            gap: 12px;
+
+            .page-numbers {
+                grid-row: 1;
+                grid-column: 1 / span 2;
+                display: flex;
+                justify-content: center;
+                margin-bottom: 5px;
+            }
+
+            .prev-btn {
+                grid-row: 2;
+                grid-column: 1;
+                width: 100% !important;
+                margin: 0;
+            }
+
+            .next-btn {
+                grid-row: 2;
+                grid-column: 2;
+                width: 100% !important;
+                margin: 0;
+            }
+        }
+
+        .paginator-options {
+            justify-content: center;
+            width: 100%;
         }
     }
 }

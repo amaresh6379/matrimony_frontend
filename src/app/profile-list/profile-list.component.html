@@ -10,13 +10,21 @@
 
             <div class="user-nav">
                 <ng-container *ngIf="!isLoggedIn">
-                    <a (click)="navigateToRegister()">Free Register</a>
-                    <span class="divider">|</span>
-                    <a (click)="toggleLogin()">Login</a>
+                    <button class="nav-btn register-btn" (click)="navigateToRegister()">
+                        <mat-icon>person_add</mat-icon>
+                        Free Register
+                    </button>
+                    <button class="nav-btn login-btn" (click)="toggleLogin()">
+                        <mat-icon>login</mat-icon>
+                        Login
+                    </button>
                 </ng-container>
 
                 <ng-container *ngIf="isLoggedIn">
-                    <a (click)="toggleLogin()">Logout</a>
+                    <button class="nav-btn logout-btn" (click)="toggleLogin()">
+                        <mat-icon>logout</mat-icon>
+                        Logout
+                    </button>
                 </ng-container>
             </div>
         </div>
@@ -109,7 +117,7 @@
         </mat-expansion-panel>
 
         <!-- Results Count -->
-        <div class="count-bar">
+        <div class="count-bar" id="profile-list-start">
             Showing {{totalProfiles}} Profiles
         </div>
 
@@ -183,7 +191,7 @@
                             Register to Contact
                         </button>
                         <button class="btn-outline" (click)="toggleLogin()">
-                            <mat-icon inline>login</mat-icon> Sign In
+                            <mat-icon inline>login</mat-icon> Login
                         </button>
                     </ng-container>
 
@@ -203,10 +211,37 @@
             </div>
         </div>
 
-        <!-- Pagination -->
-        <mat-paginator [length]="totalProfiles" [pageSize]="pageSize" [pageIndex]="pageIndex"
-            [pageSizeOptions]="[10, 20]" (page)="handlePageEvent($event)">
-        </mat-paginator>
+        <!-- Custom Pagination -->
+        <div class="custom-paginator" *ngIf="totalProfiles > 0">
+            <div class="paginator-controls">
+                <button mat-flat-button class="nav-btn prev-btn" [disabled]="pageIndex === 0"
+                    (click)="goToPreviousPage()">
+                    <mat-icon>chevron_left</mat-icon>
+                    Previous Page
+                </button>
+
+                <div class="page-numbers">
+                    <button *ngFor="let page of getPagesArray()" mat-button [class.active-page]="pageIndex === page"
+                        (click)="goToPage(page)">
+                        {{ page + 1 }}
+                    </button>
+                </div>
+
+                <button mat-flat-button class="nav-btn next-btn" [disabled]="pageIndex >= totalPages() - 1"
+                    (click)="goToNextPage()">
+                    Next Page
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
+
+            <div class="paginator-options">
+                <span class="page-size-label">Items per page:</span>
+                <select class="page-size-select" [value]="pageSize" (change)="onPageSizeChange($event)">
+                    <option [value]="10">10</option>
+                    <option [value]="20">20</option>
+                </select>
+            </div>
+        </div>
 
     </div>
 

@@ -57,4 +57,8 @@ export class SignInComponent {
             });
         }
     }
+
+    goToProfileList() {
+        this.router.navigate(['/profiles']);
+    }
 }
