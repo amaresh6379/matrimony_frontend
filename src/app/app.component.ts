@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { RegistrationFormComponent } from './registration-form/registration-form.component';
+import { filter } from 'rxjs';
+
+declare let gtag: Function;
 
 @Component({
   selector: 'app-root',
@@ -9,5 +12,15 @@ import { RegistrationFormComponent } from './registration-form/registration-form
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  title = 'matrimony';
+  title = 'Vaniya Chettiyar Kalyana Malai';
+
+  constructor(private router: Router) {
+    this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe((event: NavigationEnd) => {
+        gtag('config', 'G-Q6DTY24EXF', {
+          page_path: event.urlAfterRedirects
+        });
+      });
+  }
 }
