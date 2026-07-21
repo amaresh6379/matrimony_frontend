@@ -425,8 +425,8 @@ export class ProfileListComponent implements OnInit, OnDestroy {
         this.router.navigate(['/signup']);
     }
 
-    callAdvertiser() {
-        window.location.href = 'tel:8903960263';
+    whatsappAdvertiser() {
+        window.open('https://wa.me/918903960263', '_blank');
     }
     viewMyProfile() {
         const userId = this.authService.currentUser()?.id;
